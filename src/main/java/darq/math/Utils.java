@@ -1,6 +1,5 @@
 package darq.math;
 
-import darq.math.geometry.Line;
 import darq.math.geometry.Point;
 
 /**
@@ -8,30 +7,115 @@ import darq.math.geometry.Point;
  * @author Craig.Webster
  */
 public class Utils {
+	/**
+	 * Returns the closest <code>long</code> to the value,
+	 * with ties rounding towards positive infinity.
+	 * @param value
+	 * @return 
+	 */
 	public static long roundOpt(double value) {
 		return (long) Math.floor(value + 0.5);
 	}
 	
+	/**
+	 * Returns the closest <code>long</code> to the value,
+	 * with ties rounding towards positive infinity.
+	 * This method employs <code>Const.EPSILON</code> to determine ties.
+	 * @param value
+	 * @return 
+	 */
+	public static long roundOptEps(double value) {
+		return (long) Math.floor(value + 0.5 + Const.EPSILON);
+	}
+	
+	/**
+	 * Returns the closest <code>long</code> to the value,
+	 * with ties rounding towards infinity of the same sign as the value.
+	 * For example, 1.5 rounds to 2, -1.5 rounds to -2.
+	 * @param value
+	 * @return 
+	 */
+	public static long roundOptSym(double value) {
+		if (value >= 0) {
+			return roundOpt(value);
+		} else {
+			return roundPes(value);
+		}
+	}
+	
+	/**
+	 * Returns the closest <code>long</code> to the value,
+	 * with ties rounding towards infinity of the same sign as the value.
+	 * This method employs <code>Const.EPSILON</code> to determine ties.
+	 * @param value
+	 * @return 
+	 */
+	public static long roundOptSymEps(double value) {
+		if (value >= 0) {
+			return roundOptEps(value);
+		} else {
+			return roundPesEps(value);
+		}
+	}
+	
+	/**
+	 * Returns the closest <code>long</code> to the value,
+	 * with ties rounding towards negative infinity.
+	 * @param value
+	 * @return 
+	 */
 	public static long roundPes(double value) {
 		return (long) Math.ceil(value - 0.5);
 	}
 	
-	public static long roundOptSymmetric(double value) {
+	/**
+	 * Returns the closest <code>long</code> to the value,
+	 * with ties rounding towards negative infinity.
+	 * This method employs <code>Const.EPSILON</code> to determine .5 values.
+	 * @param value
+	 * @return 
+	 */
+	public static long roundPesEps(double value) {
+		return (long) Math.ceil(value - 0.5 - Const.EPSILON);
+	}
+	
+	/**
+	 * Returns the closest <code>long</code> to the value,
+	 * with ties rounding towards zero.
+	 * For example, 1.5 rounds to 1, -1.5 rounds to -1.
+	 * @param value
+	 * @return 
+	 */
+	public static long roundPesSym(double value) {
 		if (value >= 0) {
-			return roundOpt(value);
-		} else {
 			return roundPes(value);
+		} else {
+			return roundOpt(value);
 		}
 	}
 	
-	public static long roundPesSymmetric(double value) {
+	/**
+	 * Returns the closest <code>long</code> to the value,
+	 * with ties rounding towards zero.
+	 * For example, 1.5 rounds to 1, -1.5 rounds to -1.
+	 * This method employs <code>Const.EPSILON</code> to determine ties.
+	 * @param value
+	 * @return 
+	 */
+	public static long roundPesSymEps(double value) {
 		if (value >= 0) {
-			return roundPes(value);
+			return roundPesEps(value);
 		} else {
-			return roundOpt(value);
+			return roundOptEps(value);
 		}
 	}
 	
+	/**
+	 * Returns the value in values that is closest to negative infinity.
+	 * Returns <code>Double.POSITIVE_INFINITY</code> if no values are supplied.
+	 * @param values
+	 * @return 
+	 */
 	public static double min(double... values) {
 		double min = Double.POSITIVE_INFINITY;
 		for (double value : values) {
@@ -42,6 +126,12 @@ public class Utils {
 		return min;
 	}
 	
+	/**
+	 * Returns the value in values that is closest to positive infinity.
+	 * Returns <code>Double.NEGATIVE_INFINITY</code> if no values are supplied.
+	 * @param values
+	 * @return 
+	 */
 	public static double max(double... values) {
 		double max = Double.NEGATIVE_INFINITY;
 		for (double value : values) {
@@ -66,28 +156,10 @@ public class Utils {
 	}
 	
 	public static int sign(double value) {
-		return (int) (value / Math.abs(value));
-	}
-	
-	/**
-	 * Wraps the Math.round() method to ensure symmetric results regardless of whether the rounded point is positive or negative.
-	 * Without this, 0.5 is rounded to 1 while -0.5 is rounded to 0.
-	 * @param point
-	 * @return 
-	 */
-	public static long approximate(double point) {
-		if (point >= 0) {
-			return Math.round(point);
+		if (equals(value, 0)) {
+			return 0;
 		} else {
-			return -Math.round(Math.abs(point));
-		}
-	}
-	
-	public static long pessimisticApproximate(double point) {
-		if (point >= 0) {
-			return (long) Math.floor(point);
-		} else {
-			return (long) Math.ceil(point);
+			return (int) (value / Math.abs(value));
 		}
 	}
 	
@@ -95,59 +167,81 @@ public class Utils {
 		return Math.abs(reference - doubleOne) <= Math.abs(reference - doubleTwo) ? doubleOne : doubleTwo;
 	}
 	
-	private Point difference(Point point, Line line) {
-		double yDelta = point.y - line.getY(point.x);
-		double xDelta = point.x - line.getX(point.y);
-		return new Point(yDelta, xDelta);
-	}
-	
-	public static Point intersect(Line line1, Line line2) {
-		double y = Double.NaN;
-		double x = Double.NaN;
-		
-		if (!equals(line1.getGradient(), line2.getGradient())) {
-			if (!equals(line1.xCo, 0) && !equals(line2.xCo, 0)) {
-				y = ((line1.con / line1.xCo) - (line2.con / line2.xCo)) / ((line2.yCo / line2.xCo) - (line1.yCo / line1.xCo));
-			}
-			if (!equals(line1.yCo, 0) && !equals(line2.yCo, 0)) {
-				x = ((line1.con / line1.yCo) - (line2.con / line2.yCo)) / ((line2.xCo / line2.yCo) - (line1.xCo / line1.yCo));
-			}
-			if (y == Double.NaN && x != Double.NaN) {
-				y = line1.getY(x);
-			}
-			if (x == Double.NaN && y != Double.NaN) {
-				x = line1.getX(y);
+	public static double closest(double reference, double... values) {
+		double closest = Double.NaN;
+		double distance = Double.POSITIVE_INFINITY;
+		for (double value : values) {
+			double temp = Math.abs(reference - value);
+			if (temp < distance) {
+				closest = value;
+				distance = temp;
 			}
 		}
-		
-		return new Point(y, x);
+		return closest;
 	}
 	
-	public static boolean equals(double double1, double double2) {
-		// TODO: NaN, infinities, negative and positive.
-		if (Double.isNaN(double1) && Double.isNaN(double2)) {
+	/**
+	 * Returns true if values are less than <code>Const.EPSILON</code> apart.
+	 * Also returns true if both values are equal to Double.NaN,
+	 * Double.POSITIVE_INFINITY or Double.NEGATIVE_INFINITY.
+	 * Returns false otherwise.
+	 * @param value1
+	 * @param value2
+	 * @return 
+	 */
+	public static boolean equals(double value1, double value2) {
+		if ((Double.isNaN(value1) && Double.isNaN(value2)) || (value1 == Double.POSITIVE_INFINITY && value2 == Double.POSITIVE_INFINITY) || (value1 == Double.NEGATIVE_INFINITY && value2 == Double.NEGATIVE_INFINITY)) {
 			return true;
 		}
-		if (Double.isInfinite(double1) && Double.isInfinite(double2)) {
-			return true;
-		}
-		return (Math.abs(double1 - double2) < Const.EPSILON);
+		return (Math.abs(value1 - value2) < Const.EPSILON);
 	}
 	
+	/**
+	 * Returns true if d1 is less than but not equal to d2.
+	 * Returns false otherwise.
+	 * @param d1
+	 * @param d2
+	 * @return 
+	 */
 	public static boolean lt(double d1, double d2) {
 		return d1 < d2 && !equals(d1, d2);
 	}
 	
+	/**
+	 * Returns true if d1 is less than or equal to d2.
+	 * Returns false otherwise.
+	 * @param d1
+	 * @param d2
+	 * @return 
+	 */
 	public static boolean lte(double d1, double d2) {
 		return d1 <= d2 || equals(d1, d2);
 	}
 	
+	/**
+	 * Returns true if d1 is greater than but not equal to d2.
+	 * Returns false otherwise.
+	 * @param d1
+	 * @param d2
+	 * @return 
+	 */
 	public static boolean gt(double d1, double d2) {
 		return d1 > d2 && !equals(d1, d2);
 	}
 	
+	/**
+	 * Returns true if d1 is greater than or equal to d2.
+	 * Returns false otherwise.
+	 * @param d1
+	 * @param d2
+	 * @return 
+	 */
 	public static boolean gte(double d1, double d2) {
 		return d1 >= d2 || equals(d1, d2);
+	}
+	
+	public static int compare(double d1, double d2) {
+		return sign(d1 - d2);
 	}
 	
 	public static boolean equals(Point point1, Point point2) {
@@ -166,6 +260,28 @@ public class Utils {
 		long sum = 0;
 		for (long i = from; i <= to; i++) {
 			sum += i;
+		}
+		return sum;
+	}
+	
+	public static long summation(long from, long to, long step) {
+		if ((to - from) * step < 0) {
+			throw new ArithmeticException("Summation from " + from + " to " + to + ", with step " + step + ", will never terminate.");
+		}
+		long sum = 0;
+		for (long i = from; i <= to; i += step) {
+			sum += i;
+		}
+		return sum;
+	}
+	
+	public static double summation(double from, double to, double step) {
+		if ((to - from) * step < 0) {
+			throw new ArithmeticException("Summation from " + from + " to " + to + ", with step " + step + ", will never terminate.");
+		}
+		double sum = 0;
+		for (double d = from; lte(d, to); d += step) {
+			sum += d;
 		}
 		return sum;
 	}

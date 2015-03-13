@@ -5,7 +5,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeSet;
 
@@ -14,7 +16,7 @@ import java.util.TreeSet;
  * @author Craig.Webster
  */
 public abstract class Abstract2DPlane {
-	private double[] collidesAt(Segment s1, Segment s2) {
+	public double[] collidesAt(Segment s1, Segment s2) {
 		// Any point on s1 can be defined as "s1.pS + u1 * (s1.pE − s1.pS)".
 		// Where u1 is a percentage of the distance between s1.pS and s1.pE.
 		// This simplifies down to the two equations:
@@ -52,39 +54,6 @@ public abstract class Abstract2DPlane {
 		return new Point(y, x);
 	}
 	
-	public Point collides(Segment s1, LineType t1, Segment s2, LineType t2) {
-		double[] u = collidesAt(s1, s2);
-		if (u == null) {
-			return null;
-		}
-		
-		if (!(t1.isOn(u[0]) && t2.isOn(u[1]))) {
-			return null;
-		}
-		
-		return getPointAlongSegment(s1, u[0]);
-	}
-	
-	public Point closestPointOnSegment(Segment segment, LineType lineType, Point point) {
-		// Closest point is perpendicular to the line itself.
-		double dy = segment.pE.y - segment.pS.y;
-		double dx = segment.pE.x - segment.pS.x;
-		
-		Segment perpendicular = new Segment(point, new Point(point.y - dx, point.x + dy));
-		
-		double u = collidesAt(segment, perpendicular)[0];
-		
-		// Lock to line type;
-		if (Utils.lte(u, lineType.min())) {
-			u = lineType.min();
-		}
-		if (Utils.gte(u, lineType.max())) {
-			u = lineType.max();
-		}
-		
-		return new Point(segment.pS.y + u * (segment.pE.y - segment.pS.y), segment.pS.x + u * (segment.pE.x - segment.pS.x));
-	}
-	
 	/**
 	 *
 	 * @param s
@@ -95,33 +64,17 @@ public abstract class Abstract2DPlane {
 		return Utils.sign((s.pE.y - s.pS.y) * (p.x - s.pS.x) - (s.pE.x - s.pS.x) * (p.y - s.pS.y));
 	}
 	
-	public Map<Point, Collection<Segment>> getSegmentsByPoint(Collection<Segment> segments) {
-		Map<Point, Collection<Segment>> segmentsByPoint = new HashMap<Point, Collection<Segment>>();
-		
-		for (Segment segment : segments) {
-			Collection<Segment> currentSegments;
-			
-			currentSegments = segmentsByPoint.get(segment.pS);
-			if (currentSegments == null) {
-				currentSegments = new ArrayList<Segment>(2);
-				segmentsByPoint.put(segment.pS, currentSegments);
-			}
-			currentSegments.add(segment);
-			
-			currentSegments = segmentsByPoint.get(segment.pE);
-			if (currentSegments == null) {
-				currentSegments = new ArrayList<Segment>(2);
-				segmentsByPoint.put(segment.pE, currentSegments);
-			}
-			currentSegments.add(segment);
-		}
-		
-		return segmentsByPoint;
+	public Point adjust(Point point, double yD, double xD) {
+		return new Point(point.y + yD, point.x + xD);
 	}
 	
-	public RayCollision castRay(Segment ray, Collection<Segment> segments) {		
+	public Segment adjust(Segment segment, double yD, double xD) {
+		return new Segment(adjust(segment.pS, yD, xD), adjust(segment.pE, yD, xD));
+	}
+	
+	public List<Collision> castRay(Segment ray, Collection<Segment> segments) {		
 		HashMap<Point, Collection<Segment>> touches = new HashMap<Point, Collection<Segment>>();
-		HashMap<Point, Segment> collisions = new HashMap<Point, Segment>();
+		List<Collision> collisions = new ArrayList<Collision>();
 		
 		for (Segment segment : segments) {
 			double[] u = collidesAt(ray, segment);
@@ -143,7 +96,7 @@ public abstract class Abstract2DPlane {
 				touchSegments.add(segment);
 			} else {
 				// Colliding.
-				collisions.put(point, segment);
+				collisions.add(new Collision(point, segment));
 			}
 		}
 		
@@ -175,31 +128,18 @@ public abstract class Abstract2DPlane {
 					}
 				}
 				
-				collisions.put(entry.getKey(), closestClockwise);
+				collisions.add(new Collision(entry.getKey(), closestClockwise));
 			}
 		}
 		
-		if (collisions.isEmpty()) {
-			return null;
-		}
+		collisions.sort((collision1, collision2) -> {
+			return Utils.compare(distance(ray.pS, collision1.point), distance(ray.pS, collision2.point));
+		});
 		
-		Iterator<Point> iterator = collisions.keySet().iterator();
-		Point closestCollision = iterator.next();
-		double closestCollisionDistance = distance(ray.pS, closestCollision);
-		while (iterator.hasNext()) {
-			Point collision = iterator.next();
-			double collisionDistance = distance(ray.pS, collision);
-			if (Utils.lt(collisionDistance, closestCollisionDistance)) {
-				closestCollision = collision;
-				closestCollisionDistance = collisionDistance;
-			}
-		}
-		
-		return new RayCollision(closestCollision, collisions.get(closestCollision));
-		
+		return collisions;
 	}
 	
-	private RayCollision getNextCollision(Segment ray, Collection<Segment> segments) {		
+	private Collision getNextCollision(Segment ray, Collection<Segment> segments) {		
 		HashMap<Point, Segment> collisions = new HashMap<Point, Segment>();
 		
 		for (Segment segment : segments) {
@@ -231,28 +171,44 @@ public abstract class Abstract2DPlane {
 			}
 		}
 		
-		return new RayCollision(closestCollision, collisions.get(closestCollision));
+		return new Collision(closestCollision, collisions.get(closestCollision));
 		
 	}
 	
-	private Segment[] getFirstCollisions(Segment ray, Collection<Segment> segments) {
-		System.out.println("firstCollisions. ray: " + ray + ".");
-		TreeSet<Segment> antiClockwise = new TreeSet<Segment>((s1, s2) -> {
-			int result = Utils.sign(distance(ray.pS, s1.pE) - distance(ray.pS, s2.pE));
+	/**
+	 * 
+	 * Assumes that the Collection of segments has been normalised.
+	 * @param ray
+	 * @param normSegs
+	 * @return 
+	 */
+	private Collision[] getFirstCollisions(Segment ray, Collection<Segment> normSegs) {
+		TreeSet<Collision> antiClockwise = new TreeSet<Collision>((c1, c2) -> {
+			// Compare the distance between the collision points.
+			int result = Utils.sign(distance(ray.pS, c1.point) - distance(ray.pS, c2.point));
+			
+			// If collision points are equidistant (should be the same point),
+			// the most anti-clockwise element should be first,
+			// in effect, sorted clockwise.
 			if (result == 0) {
-				result = compare(s2, s1.pS);
+				result = compare(c2.segment, c1.segment.pS);
 			}
 			return result;
 		});
-		TreeSet<Segment> clockwise = new TreeSet<Segment>((s1, s2) -> {
-			int result = Utils.sign(distance(ray.pS, s1.pS) - distance(ray.pS, s2.pS));
+		TreeSet<Collision> clockwise = new TreeSet<Collision>((c1, c2) -> {
+			// Compare the distance between the collision points.
+			int result = Utils.sign(distance(ray.pS, c1.point) - distance(ray.pS, c2.point));
+			
+			// If collision points are equidistant (should be the same point),
+			// the most anti-clockwise element should be first,
+			// in effect, sorted anti-clockwise.
 			if (result == 0) {
-				result = compare(s2, s1.pE);
+				result = -compare(c2.segment, c1.segment.pE);
 			}
 			return result;
 		});
 		
-		for (Segment segment : segments) {
+		for (Segment segment : normSegs) {
 			double[] u = collidesAt(ray, segment);
 			
 			if (u == null || Utils.lt(u[0], 0) || Utils.lt(u[1], 0) || Utils.gt(u[1], 1)) {
@@ -262,25 +218,25 @@ public abstract class Abstract2DPlane {
 			
 			Point point = getPointAlongSegment(segment, u[1]);
 			if (Utils.gt(u[1], 0)) {
-				antiClockwise.add(new Segment(segment.pS, point));
+				antiClockwise.add(new Collision(point, segment));
 			}
 			if (Utils.lt(u[1], 1)) {
-				clockwise.add(new Segment(point, segment.pE));
+				clockwise.add(new Collision(point, segment));
 			}
 		}
 		
-		System.out.println("antiClockwise:");
-		for (Segment segment : antiClockwise) {
-			System.out.println("\t" + segment);
-		}
-		System.out.println("clockwise:");
-		for (Segment segment : clockwise) {
-			System.out.println("\t" + segment);
-		}
-		
-		return new Segment[] {antiClockwise.first(), clockwise.first()};
+		return new Collision[]{antiClockwise.first(), clockwise.first()};
 	}
 	
+	/**
+	 * Sorts segments based on start point,
+	 * ensures end points are always clockwise to start points,
+	 * and removes colinear segments.
+	 * 
+	 * @param segments
+	 * @param relativeTo
+	 * @return 
+	 */
 	private Collection<Segment> normaliseSegments(Collection<Segment> segments, Point relativeTo) {
 		TreeSet<Segment> sorted = new TreeSet<Segment>((segment1, segment2) -> {
 			// Compare clockwise-ness of starting points.
@@ -300,7 +256,7 @@ public abstract class Abstract2DPlane {
 		});
 		
 		for (Segment segment : segments) {
-			// If the point is colinear to this segment, ignore this segment.
+			// If the relativeTo is colinear to this segment, ignore this segment.
 			// As lines are technically 1 dimensional,
 			// nothing cast from relativeTo can interact with it anyway.
 			// Also prevents problems when relativeTo intersects the segment.
@@ -308,8 +264,12 @@ public abstract class Abstract2DPlane {
 				continue;
 			}
 			
-			// The end point should always be clockwise to the start point.
-			if (compare(new Segment(relativeTo, segment.pS), segment.pE) < 0) {
+			// From the relativeTo perspective,
+			// the end point should always be clockwise from the start point,
+			// if all points are colinear (only included here for safety),
+			// the start point should be closer than the end point.
+			int result = compare(new Segment(relativeTo, segment.pS), segment.pE);
+			if ((result < 0) || (result == 0 && distance(relativeTo, segment.pS) > distance(relativeTo, segment.pE))) {
 				segment = new Segment(segment.pE, segment.pS);
 			}
 			
@@ -324,22 +284,32 @@ public abstract class Abstract2DPlane {
 	}
 	
 	public Collection<Triangle> getFOV(Point centre, Collection<Segment> segments) {
-		return getFOVLotsOfIfs(centre, segments);
+		return getFOVLotsOfIfs(centre, segments).keySet();
 	}
 	
-	private Collection<Triangle> getFOVLotsOfIfs(Point centre, Collection<Segment> segments) {
-		System.out.println("#### getFOV() ####");
+	public Collection<Triangle> getFOV(Point centre, Collection<Segment> segments, double limit) {
+		return getFOVWithBlockingSegments(centre, segments, limit).keySet();
+	}
+	
+	public Map<Triangle, Segment> getFOVWithBlockingSegments(Point centre, Collection<Segment> segments, double limit) {
+		Collection<Segment> modSegments = new ArrayList<Segment>(segments.size() + 4);
 		
-		Collection<Triangle> triangles = new ArrayList<Triangle>();
+		modSegments.addAll(segments);
+		modSegments.add(new Segment(new Point(centre.y - limit, centre.x - limit), new Point(centre.y + limit, centre.x - limit)));
+		modSegments.add(new Segment(new Point(centre.y + limit, centre.x - limit), new Point(centre.y + limit, centre.x + limit)));
+		modSegments.add(new Segment(new Point(centre.y + limit, centre.x + limit), new Point(centre.y - limit, centre.x + limit)));
+		modSegments.add(new Segment(new Point(centre.y - limit, centre.x + limit), new Point(centre.y - limit, centre.x - limit)));
+		
+		return getFOVLotsOfIfs(centre, modSegments);
+	}
+	
+	private Map<Triangle, Segment> getFOVLotsOfIfs(Point centre, Collection<Segment> segments) {
+		Map<Triangle, Segment> triangles = new LinkedHashMap<Triangle, Segment>();
 		if (segments.isEmpty()) {
 			return triangles;
 		}
 		
 		Collection<Segment> normSegs = normaliseSegments(segments, centre);
-		System.out.println("Sorted segments (around " + centre + "):");
-		for (Segment segment : normSegs) {
-			System.out.println("\t" + segment);
-		}
 		
 		ArrayList<Point> points = new ArrayList<Point>();
 		Map<Point, Segment> startPointToSegment = new HashMap<Point, Segment>();
@@ -359,17 +329,14 @@ public abstract class Abstract2DPlane {
 			}
 			
 			// If points colinear, equidistant, and on opposite sides of centre.
-			if (result == 0 && !point1.equals(point2)) {
-				// Select the first one.
+			if (result == 0 && !Utils.equals(point1, point2)) {
+				// Arbitrary selection,
+				// but to make sure they don't appear as equal.
 				result = -1;
 			}
+			
 			return result;
 		});
-		
-		System.out.println("Sorted points (around " + centre + "):");
-		for (Point point : points) {
-			System.out.println("\t" + point);
-		}
 		
 		/*
 			col = castRay(new LineSegment(centre, next), normSegs);
@@ -382,42 +349,36 @@ public abstract class Abstract2DPlane {
 		*/
 		Iterator<Point> iterator = points.iterator();
 		Point next = iterator.next();
-		Segment[] firstCollisions = getFirstCollisions(new Segment(centre, next), normSegs);
-		Point initPoint = firstCollisions[0].pE;
-		Point lastPoint = firstCollisions[1].pS;
-		Segment currentSegment = firstCollisions[1];
-		System.out.println("Starting with initial values. next: " + next + ". initPoint: " + initPoint + ". lastPoint: " + lastPoint + ". currentSegment: " + currentSegment + ".");
+		Collision[] firstCollisions = getFirstCollisions(new Segment(centre, next), normSegs);
+		Point initPoint = firstCollisions[0].point;
+		Point lastPoint = firstCollisions[1].point;
+		Segment currentSegment = firstCollisions[1].segment;
 		while (iterator.hasNext()) {
-			if (currentSegment == null) {
-				System.out.println("Null currentSegment.");
-				System.out.println("Next: " + next + ", ");
-			}
 			next = iterator.next();
 			if (next.equals(currentSegment.pE)) {
-				triangles.add(new Triangle(centre, lastPoint, next));
+				triangles.put(new Triangle(centre, lastPoint, next), currentSegment);
 				
-				RayCollision collision = getNextCollision(new Segment(centre, next), normSegs);
+				Collision collision = getNextCollision(new Segment(centre, next), normSegs);
 				lastPoint = collision.point;
 				currentSegment = collision.segment;
-				
-				System.out.println("End of currentSegment. next: " + next + ". lastPoint: " + lastPoint + ". currentSegment: " + currentSegment + ".");
 			} else if (startPointToSegment.containsKey(next)) {
 				// TODO: If statement above, otherwise endpoints are tested and sometimes closer than the current segment.
 				double[] u = collidesAt(new Segment(centre, next), currentSegment);
 				Point pointOnCurrentSegment = getPointAlongSegment(currentSegment, u[1]);
 				
 				// If next point is closer to centre than current segment.
-				if (Utils.lt(distance(centre, next), distance(centre, pointOnCurrentSegment))) {
-					triangles.add(new Triangle(centre, lastPoint, pointOnCurrentSegment));
+				// Or if the point is touching the current segment,
+				// and the new segment is in front of the current segment.
+				double distanceD = distance(centre, next) - distance(centre, pointOnCurrentSegment);
+				if (Utils.lt(distanceD, 0) || (Utils.equals(distanceD, 0) && Utils.gt(compare(currentSegment, startPointToSegment.get(next).pE), 0))) {
+					triangles.put(new Triangle(centre, lastPoint, pointOnCurrentSegment), currentSegment);
 					
 					lastPoint = next;
 					currentSegment = startPointToSegment.get(next);
-					
-					System.out.println("Closer segment. next: " + next + ". lastPoint: " + lastPoint + ". currentSegment: " + currentSegment + ".");
 				}
 			}
 		}
-		triangles.add(new Triangle(centre, lastPoint, initPoint));
+		triangles.put(new Triangle(centre, lastPoint, initPoint), currentSegment);
 		
 		return triangles;
 	}
@@ -434,103 +395,6 @@ public abstract class Abstract2DPlane {
 		return new Point(yD * ratio, xD * ratio);
 	}
 	
-	public enum LineType {
-		LINE {
-			@Override
-			public boolean isOn(double u) {
-				return true;
-			}
-
-			@Override
-			public double min() {
-				return Double.NEGATIVE_INFINITY;
-			}
-
-			@Override
-			public double max() {
-				return Double.POSITIVE_INFINITY;
-			}
-		},
-		RAY_EXCLUSIVE {
-			@Override
-			public boolean isOn(double u) {
-				return Utils.gt(u, 0);
-			}
-			
-			@Override
-			public double min() {
-				return 0;
-			}
-
-			@Override
-			public double max() {
-				return Double.POSITIVE_INFINITY;
-			}
-		},
-		RAY_INCLUSIVE {
-			@Override
-			public boolean isOn(double u) {
-				return Utils.gte(u, 0);
-			}
-			
-			@Override
-			public double min() {
-				return 0;
-			}
-
-			@Override
-			public double max() {
-				return Double.POSITIVE_INFINITY;
-			}
-		},
-		SEGMENT_EXCLUSIVE {
-			@Override
-			public boolean isOn(double u) {
-				return Utils.gt(u, 0) && Utils.lt(u, 1);
-			}
-			
-			@Override
-			public double min() {
-				return 0;
-			}
-
-			@Override
-			public double max() {
-				return 1;
-			}
-		},
-		SEGMENT_INCLUSIVE {
-			@Override
-			public boolean isOn(double u) {
-				return Utils.gte(u, 0) && Utils.lte(u, 1);
-			}
-			
-			@Override
-			public double min() {
-				return 0;
-			}
-
-			@Override
-			public double max() {
-				return 1;
-			}
-		};
-		
-		public abstract boolean isOn(double u);
-		public abstract double min();
-		public abstract double max();
-	}
-	
-	public class RayCollision {
-		public final Point point;
-		public final Segment segment;
-
-		public RayCollision(Point point, Segment segment) {
-			this.point = point;
-			this.segment = segment;
-		}
-	}
-	
 	public double angle(Point from, Point to) {
 		return angle(to.y - from.y, to.x - from.x);
 	}
@@ -541,5 +405,81 @@ public abstract class Abstract2DPlane {
 			result = 2 * Math.PI + result;
 		}
 		return result;
+	}
+	
+	public int contains(Polygon polygon, Point point) {
+		Collection<Segment> segments = new ArrayList<Segment>(polygon.segments.size());
+		for (Segment segment : polygon.segments) {
+			int result = compare(new Segment(point, segment.pS), segment.pE);
+			if (result == 0) {
+				// Colinear.
+				if (Utils.equals(distance(segment.pS, point) + distance(point, segment.pE), distance(segment.pS, segment.pE))) {
+					// On the segment.
+					return 0;
+				}
+				// Point is colinear to, but not on, the segment,
+				// ignore the segment,
+				// point touches the line past the bounds of the segment.
+			} else {
+				// The end point should always be clockwise to the start point.
+				if (result > 0) {
+					segments.add(segment);
+				} else {
+					segments.add(new Segment(segment.pE, segment.pS));
+				}
+			}
+		}
+		
+		// Cast a ray, straight up, starting from the point.
+		// Count the number of times the ray intersects the polygon.
+		Segment ray = new Segment(point, new Point(point.y + 1, point.x));
+		int count = 0;
+		for (Segment segment : segments) {
+			double[] u = collidesAt(ray, segment);
+			// Ignore end points to not count intersected corners twice.
+			// Tangential corners will be counted either twice or zero times,
+			// this does not affect the result.
+			if (u == null || Utils.lt(u[0], 0) || Utils.lt(u[1], 0) || Utils.gte(u[1], 1)) {
+				continue;
+			}
+			
+			count++;
+		}
+		
+		if (count % 2 == 0) {
+			return -1;
+		} else {
+			return 1;
+		}
+	}
+	
+	public boolean contains(Segment s, Point p) {
+//		double yD = segment.pE.y - segment.pS.y;
+//		double xD = segment.pE.x - segment.pS.x;
+//		
+//		Segment perpendicular = new Segment(point, new Point(point.y - xD, point.x + yD));
+//		double[] u = collidesAt(segment, perpendicular);
+//		
+//		return Utils.gte(u[0], 0) && Utils.lte(u[0], 1) && Utils.equals(u[1], 0);
+		
+		return Utils.equals((p.y - s.pS.y) / (s.pE.y - s.pS.y), (p.x - s.pS.x) / (s.pE.x - s.pS.x)) &&
+				Utils.sign(s.pS.y - p.y) * Utils.sign(s.pS.y - s.pE.y) >= 0 && Utils.sign(s.pE.y - p.y) * Utils.sign(s.pE.y - s.pS.y) >= 0;
+		
+//		return collidesAt(new Segment(segment.pS, point), new Segment(point, segment.pE)) == null &&
+//				Utils.equals(distance(segment.pS, point) + distance(point, segment.pE), distance(segment.pS, segment.pE));
+	}
+	
+	public boolean overlaps(Segment s1, Segment s2) {
+		return collidesAt(s1, s2) == null && (contains(s1, s2.pS) || contains(s1, s2.pS) || contains(s2, s1.pS) || contains(s2, s1.pE));
+	}
+	
+	public class Collision {
+		public final Point point;
+		public final Segment segment;
+
+		public Collision(Point point, Segment segment) {
+			this.point = point;
+			this.segment = segment;
+		}
 	}
 }

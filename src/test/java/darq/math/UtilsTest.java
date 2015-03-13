@@ -4,9 +4,9 @@
  */
 package darq.math;
 
-import darq.math.geometry.Line;
-import darq.math.geometry.Point;
+import java.util.Arrays;
 import junit.framework.TestCase;
+import org.junit.Test;
 
 /**
  *
@@ -26,6 +26,136 @@ public class UtilsTest extends TestCase {
 	@Override
 	protected void tearDown() throws Exception {
 		super.tearDown();
+	}
+	
+	@Test
+	public void testRoundOptEps() {
+		System.out.println("roundOptEps");
+		double value;
+		long exp;
+		long res;
+		
+		value = 0D;
+		exp = 0L;
+		res = Utils.roundOptEps(value);
+		assertEquals("For test (" + value + "), was expecting " + exp + " but found " + res + ".", exp, res);
+		
+		value = 1D;
+		exp = 1L;
+		res = Utils.roundOptEps(value);
+		assertEquals("For test (" + value + "), was expecting " + exp + " but found " + res + ".", exp, res);
+		
+		value = 0.1D;
+		exp = 0L;
+		res = Utils.roundOptEps(value);
+		assertEquals("For test (" + value + "), was expecting " + exp + " but found " + res + ".", exp, res);
+		
+		value = 0.9D;
+		exp = 1L;
+		res = Utils.roundOptEps(value);
+		assertEquals("For test (" + value + "), was expecting " + exp + " but found " + res + ".", exp, res);
+		
+		value = 0.5D;
+		exp = 1L;
+		res = Utils.roundOptEps(value);
+		assertEquals("For test (" + value + "), was expecting " + exp + " but found " + res + ".", exp, res);
+		
+		double w = 0.000000000001;
+		
+		value = 0D + w;
+		exp = 0L;
+		res = Utils.roundOptEps(value);
+		assertEquals("For test (" + value + "), was expecting " + exp + " but found " + res + ".", exp, res);
+		
+		value = 0D - w;
+		exp = 0L;
+		res = Utils.roundOptEps(value);
+		assertEquals("For test (" + value + "), was expecting " + exp + " but found " + res + ".", exp, res);
+		
+		value = 1D + w;
+		exp = 1L;
+		res = Utils.roundOptEps(value);
+		assertEquals("For test (" + value + "), was expecting " + exp + " but found " + res + ".", exp, res);
+		
+		value = 1D - w;
+		exp = 1L;
+		res = Utils.roundOptEps(value);
+		assertEquals("For test (" + value + "), was expecting " + exp + " but found " + res + ".", exp, res);
+		
+		value = 0.5D + w;
+		exp = 1L;
+		res = Utils.roundOptEps(value);
+		assertEquals("For test (" + value + "), was expecting " + exp + " but found " + res + ".", exp, res);
+		
+		value = 0.5D - w;
+		exp = 1L;
+		res = Utils.roundOptEps(value);
+		assertEquals("For test (" + value + "), was expecting " + exp + " but found " + res + ".", exp, res);
+	}
+	
+	@Test
+	public void testRoundPesEps() {
+		System.out.println("roundPesEps");
+		double value;
+		long exp;
+		long res;
+		
+		value = 0D;
+		exp = 0L;
+		res = Utils.roundPesEps(value);
+		assertEquals("For test (" + value + "), was expecting " + exp + " but found " + res + ".", exp, res);
+		
+		value = 1D;
+		exp = 1L;
+		res = Utils.roundPesEps(value);
+		assertEquals("For test (" + value + "), was expecting " + exp + " but found " + res + ".", exp, res);
+		
+		value = 0.1D;
+		exp = 0L;
+		res = Utils.roundPesEps(value);
+		assertEquals("For test (" + value + "), was expecting " + exp + " but found " + res + ".", exp, res);
+		
+		value = 0.9D;
+		exp = 1L;
+		res = Utils.roundPesEps(value);
+		assertEquals("For test (" + value + "), was expecting " + exp + " but found " + res + ".", exp, res);
+		
+		value = 0.5D;
+		exp = 0L;
+		res = Utils.roundPesEps(value);
+		assertEquals("For test (" + value + "), was expecting " + exp + " but found " + res + ".", exp, res);
+		
+		double w = 0.000000000001;
+		
+		value = 0D + w;
+		exp = 0L;
+		res = Utils.roundPesEps(value);
+		assertEquals("For test (" + value + "), was expecting " + exp + " but found " + res + ".", exp, res);
+		
+		value = 0D - w;
+		exp = 0L;
+		res = Utils.roundPesEps(value);
+		assertEquals("For test (" + value + "), was expecting " + exp + " but found " + res + ".", exp, res);
+		
+		value = 1D + w;
+		exp = 1L;
+		res = Utils.roundPesEps(value);
+		assertEquals("For test (" + value + "), was expecting " + exp + " but found " + res + ".", exp, res);
+		
+		value = 1D - w;
+		exp = 1L;
+		res = Utils.roundPesEps(value);
+		assertEquals("For test (" + value + "), was expecting " + exp + " but found " + res + ".", exp, res);
+		
+		value = 0.5D + w;
+		exp = 0L;
+		res = Utils.roundPesEps(value);
+		assertEquals("For test (" + value + "), was expecting " + exp + " but found " + res + ".", exp, res);
+		
+		value = 0.5D - w;
+		exp = 0L;
+		res = Utils.roundPesEps(value);
+		assertEquals("For test (" + value + "), was expecting " + exp + " but found " + res + ".", exp, res);
 	}
 	
 	/**
@@ -49,5 +179,81 @@ public class UtilsTest extends TestCase {
 		exp = true;
 		res = Utils.equals(d1, d2);
 		assertEquals("For test (" + d1 + " == " + d2 + "), was expecting " + exp + " but found " + res + ".", exp, res);
+		
+		d1 = Double.NaN;
+		d2 = Double.NaN;
+		exp = true;
+		res = Utils.equals(d1, d2);
+		assertEquals("For test (" + d1 + " == " + d2 + "), was expecting " + exp + " but found " + res + ".", exp, res);
+		
+		d1 = Double.NaN;
+		d2 = 0;
+		exp = false;
+		res = Utils.equals(d1, d2);
+		assertEquals("For test (" + d1 + " == " + d2 + "), was expecting " + exp + " but found " + res + ".", exp, res);
+		
+		d1 = Double.NaN;
+		d2 = 128D;
+		exp = false;
+		res = Utils.equals(d1, d2);
+		assertEquals("For test (" + d1 + " == " + d2 + "), was expecting " + exp + " but found " + res + ".", exp, res);
+		
+		d1 = Double.POSITIVE_INFINITY;
+		d2 = Double.POSITIVE_INFINITY;
+		exp = true;
+		res = Utils.equals(d1, d2);
+		assertEquals("For test (" + d1 + " == " + d2 + "), was expecting " + exp + " but found " + res + ".", exp, res);
+		
+		d1 = Double.NEGATIVE_INFINITY;
+		d2 = Double.NEGATIVE_INFINITY;
+		exp = true;
+		res = Utils.equals(d1, d2);
+		assertEquals("For test (" + d1 + " == " + d2 + "), was expecting " + exp + " but found " + res + ".", exp, res);
+		
+		d1 = Double.POSITIVE_INFINITY;
+		d2 = Double.NEGATIVE_INFINITY;
+		exp = false;
+		res = Utils.equals(d1, d2);
+		assertEquals("For test (" + d1 + " == " + d2 + "), was expecting " + exp + " but found " + res + ".", exp, res);
+		
+		d1 = Double.POSITIVE_INFINITY;
+		d2 = 0;
+		exp = false;
+		res = Utils.equals(d1, d2);
+		assertEquals("For test (" + d1 + " == " + d2 + "), was expecting " + exp + " but found " + res + ".", exp, res);
+		
+		d1 = Double.NEGATIVE_INFINITY;
+		d2 = 0;
+		exp = false;
+		res = Utils.equals(d1, d2);
+		assertEquals("For test (" + d1 + " == " + d2 + "), was expecting " + exp + " but found " + res + ".", exp, res);
+		
+		d1 = Double.NaN;
+		d2 = Double.POSITIVE_INFINITY;
+		exp = false;
+		res = Utils.equals(d1, d2);
+		assertEquals("For test (" + d1 + " == " + d2 + "), was expecting " + exp + " but found " + res + ".", exp, res);
+		
+		d1 = Double.NaN;
+		d2 = Double.NEGATIVE_INFINITY;
+		exp = false;
+		res = Utils.equals(d1, d2);
+		assertEquals("For test (" + d1 + " == " + d2 + "), was expecting " + exp + " but found " + res + ".", exp, res);
+	}
+	
+	public void testClosest() {
+		System.out.println("closest");
+		double reference;
+		double[] values;
+		double exp;
+		double res;
+		
+		reference = 0;
+		values = new double[] {
+			
+		};
+		exp = 1;
+		res = Utils.closest(reference, values);
+		assertEquals("For test (" + reference + ", " + Arrays.toString(values) + "), was expecting " + exp + " but found " + res + ".", exp, res);
 	}
 }

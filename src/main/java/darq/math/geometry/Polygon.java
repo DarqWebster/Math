@@ -52,4 +52,9 @@ public class Polygon {
 		
 		return new AxisAlignedBoundingBox(minY, minX, maxY, maxX);
 	}
+
+	@Override
+	public String toString() {
+		return "Polygon{points=" + points + '}';
+	}
 }

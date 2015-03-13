@@ -305,7 +305,7 @@ public class Hexagonal2DPlaneTest extends TestCase {
 		for (Map.Entry<Point, Coord[]> test : tests.entrySet()) {
 			Point t = test.getKey();
 			
-			// Uncomment to debug.
+			// Uncomment and add breakpoint to debug.
 //			if (t.equals(new Point(0D, 0D))) {
 //				System.out.println("Debug...");
 //			}
@@ -319,6 +319,61 @@ public class Hexagonal2DPlaneTest extends TestCase {
 				assertTrue(error, exp[i].equals(res[i]));
 			}
 		}
+		
+		// Wiggle wiggle wiggle.
+		for (Map.Entry<Point, Coord[]> test : tests.entrySet()) {
+			double w = 0.000000000001;
+			
+			Point p = test.getKey();
+			Point[] wiggle = new Point[] {
+				p,
+				new Point(p.y + w, p.x    ),
+				new Point(p.y - w, p.x    ),
+				new Point(p.y    , p.x + w),
+				new Point(p.y    , p.x - w),
+				new Point(p.y + w, p.x + w),
+				new Point(p.y + w, p.x - w),
+				new Point(p.y - w, p.x + w),
+				new Point(p.y - w, p.x - w)
+			};
+			
+			// Uncomment and add breakpoint to debug.
+//			if (t.equals(new Point(0D, 0D))) {
+//				System.out.println("Debug...");
+//			}
+			
+			Coord[] exp = test.getValue();
+			for (Point t : wiggle) {
+				Coord[] res = Hexagonal2DPlane.round(t.y, t.x);
+				String error = "For test " + t + ", was expecting " + Arrays.deepToString(exp) + ", but found " + Arrays.deepToString(res) + ".";
+				assertEquals(error, exp.length, res.length);
+				for (int i = 0; i < exp.length; i++) {
+					assertTrue(error, exp[i].equals(res[i]));
+				}
+			}
+		}
+	}
+	
+	@Test
+	public void testSpecRound() {
+		System.out.println("specRound");
+		
+		Coord exp;
+		Coord res;
+		
+		Coord[] coords;
+		boolean conservative;
+		int direction;
+		
+		// Centers.
+		coords = new Coord[] {
+			new Coord(0, 0),
+			new Coord(1, 0),
+			new Coord(1, 1)
+		};
+		conservative = true;
+		direction = Hexagonal2DPlane.DIRECTION_CLOCKWISE;
+		exp = coords[0];
 	}
 	
 	@Test
@@ -375,6 +430,395 @@ public class Hexagonal2DPlaneTest extends TestCase {
 			String error = "For test (" + t[0] + ", " + t[1] + "), was expecting " + exp + ", but found " + res + ".";
 			assertTrue(error, Utils.equals(exp, res));
 		}
+	}
+	
+	@Test
+	public void testContainsPolygonPoint() {
+		System.out.println("contains(Polygon, Point)");
+		
+		Hexagonal2DPlane instance = new Hexagonal2DPlane();
+		Polygon polygon;
+		Point point;
+		int expResult;
+		int result;
+		
+		polygon = new Polygon(
+				new Point(100, 100),
+				new Point(200, 100),
+				new Point(200, 200),
+				new Point(100, 200)
+		);
+		point = new Point(150, 150);
+		System.out.println("(" + polygon + ", " + point + "); // Centre.");
+		expResult = 1;
+		result = instance.contains(polygon, point);
+		assertEquals(expResult, result);
+		
+		polygon = new Polygon(
+				new Point(100, 100),
+				new Point(200, 100),
+				new Point(200, 200),
+				new Point(100, 200)
+		);
+		point = new Point(150, 100);
+		System.out.println("(" + polygon + ", " + point + "); // On left vertical side segment.");
+		expResult = 0;
+		result = instance.contains(polygon, point);
+		assertEquals(expResult, result);
+		
+		polygon = new Polygon(
+				new Point(100, 100),
+				new Point(200, 100),
+				new Point(200, 200),
+				new Point(100, 200)
+		);
+		point = new Point(150, 200);
+		System.out.println("(" + polygon + ", " + point + "); // On right vertical side segment.");
+		expResult = 0;
+		result = instance.contains(polygon, point);
+		assertEquals(expResult, result);
+		
+		polygon = new Polygon(
+				new Point(100, 100),
+				new Point(200, 100),
+				new Point(200, 200),
+				new Point(100, 200)
+		);
+		point = new Point(100, 150);
+		System.out.println("(" + polygon + ", " + point + "); // On bottom horizontal side segment.");
+		expResult = 0;
+		result = instance.contains(polygon, point);
+		assertEquals(expResult, result);
+		
+		polygon = new Polygon(
+				new Point(100, 100),
+				new Point(200, 100),
+				new Point(200, 200),
+				new Point(100, 200)
+		);
+		point = new Point(200, 150);
+		System.out.println("(" + polygon + ", " + point + "); // On top horizontal side segment.");
+		expResult = 0;
+		result = instance.contains(polygon, point);
+		assertEquals(expResult, result);
+		
+		polygon = new Polygon(
+				new Point(100, 100),
+				new Point(200, 100),
+				new Point(200, 200),
+				new Point(100, 200)
+		);
+		point = new Point(100, 100);
+		System.out.println("(" + polygon + ", " + point + "); // On bottom left corner.");
+		expResult = 0;
+		result = instance.contains(polygon, point);
+		assertEquals(expResult, result);
+		
+		polygon = new Polygon(
+				new Point(100, 100),
+				new Point(200, 100),
+				new Point(200, 200),
+				new Point(100, 200)
+		);
+		point = new Point(200, 100);
+		System.out.println("(" + polygon + ", " + point + "); // On top left corner.");
+		expResult = 0;
+		result = instance.contains(polygon, point);
+		assertEquals(expResult, result);
+		
+		polygon = new Polygon(
+				new Point(100, 100),
+				new Point(200, 100),
+				new Point(200, 200),
+				new Point(100, 200)
+		);
+		point = new Point(200, 200);
+		System.out.println("(" + polygon + ", " + point + "); // On top right corner.");
+		expResult = 0;
+		result = instance.contains(polygon, point);
+		assertEquals(expResult, result);
+		
+		polygon = new Polygon(
+				new Point(100, 100),
+				new Point(200, 100),
+				new Point(200, 200),
+				new Point(100, 200)
+		);
+		point = new Point(100, 200);
+		System.out.println("(" + polygon + ", " + point + "); // On bottom right corner.");
+		expResult = 0;
+		result = instance.contains(polygon, point);
+		assertEquals(expResult, result);
+		
+		polygon = new Polygon(
+				new Point(100, 100),
+				new Point(200, 100),
+				new Point(200, 200),
+				new Point(100, 200)
+		);
+		point = new Point(50, 50);
+		System.out.println("(" + polygon + ", " + point + "); // Outside, bottom left.");
+		expResult = -1;
+		result = instance.contains(polygon, point);
+		assertEquals(expResult, result);
+		
+		polygon = new Polygon(
+				new Point(100, 100),
+				new Point(200, 100),
+				new Point(200, 200),
+				new Point(100, 200)
+		);
+		point = new Point(250, 250);
+		System.out.println("(" + polygon + ", " + point + "); // Outside, top right.");
+		expResult = -1;
+		result = instance.contains(polygon, point);
+		assertEquals(expResult, result);
+		
+		polygon = new Polygon(
+				new Point(100, 100),
+				new Point(200, 100),
+				new Point(200, 200),
+				new Point(100, 200)
+		);
+		point = new Point(50, 150);
+		System.out.println("(" + polygon + ", " + point + "); // Outside, below.");
+		expResult = -1;
+		result = instance.contains(polygon, point);
+		assertEquals(expResult, result);
+		
+		polygon = new Polygon(
+				new Point(100, 100),
+				new Point(200, 100),
+				new Point(200, 200),
+				new Point(100, 200)
+		);
+		point = new Point(50, 250);
+		System.out.println("(" + polygon + ", " + point + "); // Outside, above.");
+		expResult = -1;
+		result = instance.contains(polygon, point);
+		assertEquals(expResult, result);
+		
+		polygon = new Polygon(
+				new Point(100, 100),
+				new Point(200, 100),
+				new Point(200, 200),
+				new Point(100, 200)
+		);
+		point = new Point(150, 50);
+		System.out.println("(" + polygon + ", " + point + "); // Outside, left.");
+		expResult = -1;
+		result = instance.contains(polygon, point);
+		assertEquals(expResult, result);
+		
+		polygon = new Polygon(
+				new Point(100, 100),
+				new Point(200, 100),
+				new Point(200, 200),
+				new Point(100, 200)
+		);
+		point = new Point(150, 250);
+		System.out.println("(" + polygon + ", " + point + "); // Outside, right.");
+		expResult = -1;
+		result = instance.contains(polygon, point);
+		assertEquals(expResult, result);
+		
+		polygon = new Polygon(
+				new Point(100, 100),
+				new Point(200, 100),
+				new Point(200, 200),
+				new Point(100, 200)
+		);
+		point = new Point(50, 100);
+		System.out.println("(" + polygon + ", " + point + "); // Outside, below, inline with left side.");
+		expResult = -1;
+		result = instance.contains(polygon, point);
+		assertEquals(expResult, result);
+		
+		polygon = new Polygon(
+				new Point(100, 100),
+				new Point(200, 100),
+				new Point(200, 200),
+				new Point(100, 200)
+		);
+		point = new Point(250, 100);
+		System.out.println("(" + polygon + ", " + point + "); // Outside, above, inline with left side.");
+		expResult = -1;
+		result = instance.contains(polygon, point);
+		assertEquals(expResult, result);
+		
+		polygon = new Polygon(
+				new Point(100, 100),
+				new Point(200, 100),
+				new Point(200, 200),
+				new Point(100, 200)
+		);
+		point = new Point(50, 200);
+		System.out.println("(" + polygon + ", " + point + "); // Outside, below, inline with right side.");
+		expResult = -1;
+		result = instance.contains(polygon, point);
+		assertEquals(expResult, result);
+		
+		polygon = new Polygon(
+				new Point(100, 100),
+				new Point(200, 100),
+				new Point(200, 200),
+				new Point(100, 200)
+		);
+		point = new Point(250, 200);
+		System.out.println("(" + polygon + ", " + point + "); // Outside, above, inline with right side.");
+		expResult = -1;
+		result = instance.contains(polygon, point);
+		assertEquals(expResult, result);
+		
+		polygon = new Polygon(
+				new Point(100, 100),
+				new Point(200, 100),
+				new Point(200, 200),
+				new Point(100, 200)
+		);
+		point = new Point(100, 50);
+		System.out.println("(" + polygon + ", " + point + "); // Outside, left, inline with bottom side.");
+		expResult = -1;
+		result = instance.contains(polygon, point);
+		assertEquals(expResult, result);
+		
+		polygon = new Polygon(
+				new Point(100, 100),
+				new Point(200, 100),
+				new Point(200, 200),
+				new Point(100, 200)
+		);
+		point = new Point(200, 50);
+		System.out.println("(" + polygon + ", " + point + "); // Outside, left, inline with top side.");
+		expResult = -1;
+		result = instance.contains(polygon, point);
+		assertEquals(expResult, result);
+		
+		polygon = new Polygon(
+				new Point(100, 100),
+				new Point(200, 100),
+				new Point(200, 200),
+				new Point(100, 200)
+		);
+		point = new Point(100, 250);
+		System.out.println("(" + polygon + ", " + point + "); // Outside, right, inline with bottom side.");
+		expResult = -1;
+		result = instance.contains(polygon, point);
+		assertEquals(expResult, result);
+		
+		polygon = new Polygon(
+				new Point(100, 100),
+				new Point(200, 100),
+				new Point(200, 200),
+				new Point(100, 200)
+		);
+		point = new Point(200, 250);
+		System.out.println("(" + polygon + ", " + point + "); // Outside, right, inline with top side.");
+		expResult = -1;
+		result = instance.contains(polygon, point);
+		assertEquals(expResult, result);
+	}
+	
+	@Test
+	public void testContainsSegmentPoint() {
+		System.out.println("contains(Segment, Point)");
+		
+		Hexagonal2DPlane instance = new Hexagonal2DPlane();
+		Segment segment;
+		Point point;
+		boolean expResult;
+		boolean result;
+		
+		segment = new Segment(new Point(100, 100), new Point(200, 200));
+		point = new Point(50, 50);
+		System.out.println("(" + segment + ", " + point + "); // Colinear, but before.");
+		expResult = false;
+		result = instance.contains(segment, point);
+		assertEquals(expResult, result);
+		
+		segment = new Segment(new Point(100, 100), new Point(200, 200));
+		point = new Point(100, 100);
+		System.out.println("(" + segment + ", " + point + "); // Start.");
+		expResult = true;
+		result = instance.contains(segment, point);
+		assertEquals(expResult, result);
+		
+		segment = new Segment(new Point(100, 100), new Point(200, 200));
+		point = new Point(125, 125);
+		System.out.println("(" + segment + ", " + point + "); // Quarter.");
+		expResult = true;
+		result = instance.contains(segment, point);
+		assertEquals(expResult, result);
+		
+		segment = new Segment(new Point(100, 100), new Point(200, 200));
+		point = new Point(150, 150);
+		System.out.println("(" + segment + ", " + point + "); // Half.");
+		expResult = true;
+		result = instance.contains(segment, point);
+		assertEquals(expResult, result);
+		
+		segment = new Segment(new Point(100, 100), new Point(200, 200));
+		point = new Point(175, 175);
+		System.out.println("(" + segment + ", " + point + "); // Three-quarter.");
+		expResult = true;
+		result = instance.contains(segment, point);
+		assertEquals(expResult, result);
+		
+		segment = new Segment(new Point(100, 100), new Point(200, 200));
+		point = new Point(200, 200);
+		System.out.println("(" + segment + ", " + point + "); // End.");
+		expResult = true;
+		result = instance.contains(segment, point);
+		assertEquals(expResult, result);
+		
+		segment = new Segment(new Point(100, 100), new Point(200, 200));
+		point = new Point(250, 250);
+		System.out.println("(" + segment + ", " + point + "); // Colinear, but after.");
+		expResult = false;
+		result = instance.contains(segment, point);
+		assertEquals(expResult, result);
+		
+		segment = new Segment(new Point(100, 100), new Point(200, 200));
+		point = new Point(75, 125);
+		System.out.println("(" + segment + ", " + point + "); // Off, perpendicular to start.");
+		expResult = false;
+		result = instance.contains(segment, point);
+		assertEquals(expResult, result);
+		
+		segment = new Segment(new Point(100, 100), new Point(200, 200));
+		point = new Point(125, 75);
+		System.out.println("(" + segment + ", " + point + "); // Off, perpendicular to start.");
+		expResult = false;
+		result = instance.contains(segment, point);
+		assertEquals(expResult, result);
+		
+		segment = new Segment(new Point(100, 100), new Point(200, 200));
+		point = new Point(125, 175);
+		System.out.println("(" + segment + ", " + point + "); // Off, perpendicular to centre.");
+		expResult = false;
+		result = instance.contains(segment, point);
+		assertEquals(expResult, result);
+		
+		segment = new Segment(new Point(100, 100), new Point(200, 200));
+		point = new Point(175, 125);
+		System.out.println("(" + segment + ", " + point + "); // Off, perpendicular to centre.");
+		expResult = false;
+		result = instance.contains(segment, point);
+		assertEquals(expResult, result);
+		
+		segment = new Segment(new Point(100, 100), new Point(200, 200));
+		point = new Point(175, 225);
+		System.out.println("(" + segment + ", " + point + "); // Off, perpendicular to end.");
+		expResult = false;
+		result = instance.contains(segment, point);
+		assertEquals(expResult, result);
+		
+		segment = new Segment(new Point(100, 100), new Point(200, 200));
+		point = new Point(225, 175);
+		System.out.println("(" + segment + ", " + point + "); // Off, perpendicular to end.");
+		expResult = false;
+		result = instance.contains(segment, point);
+		assertEquals(expResult, result);
 	}
 	
 //	@Ignore @Test
