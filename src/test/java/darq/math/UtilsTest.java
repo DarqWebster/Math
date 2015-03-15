@@ -252,7 +252,7 @@ public class UtilsTest extends TestCase {
 		values = new double[] {
 			
 		};
-		exp = 1;
+		exp = Double.NaN;
 		res = Utils.closest(reference, values);
 		assertEquals("For test (" + reference + ", " + Arrays.toString(values) + "), was expecting " + exp + " but found " + res + ".", exp, res);
 	}
