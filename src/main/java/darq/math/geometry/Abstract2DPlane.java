@@ -165,7 +165,7 @@ public abstract class Abstract2DPlane {
 		double closestCollisionDistance = Double.POSITIVE_INFINITY;
 		for (Collision collision : collisions) {
 			double collDistance = distance(ray.pS, collision.point);
-			if (Utils.lt(collDistance, closestCollisionDistance)) {
+			if (Utils.lte(collDistance, closestCollisionDistance)) {
 				closestCollision = collision;
 				closestCollisionDistance = collDistance;
 			}
