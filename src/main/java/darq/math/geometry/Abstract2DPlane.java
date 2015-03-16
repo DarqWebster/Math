@@ -3,6 +3,7 @@ package darq.math.geometry;
 import darq.math.Utils;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -56,11 +57,11 @@ public abstract class Abstract2DPlane {
 	
 	/**
 	 *
-	 * @param s
 	 * @param p
+	 * @param s
 	 * @return -1 if p is to the left of s, 0 if p and s are colinear, and 1 if  p is to the right of 1.
 	 */
-	public int compare(Segment s, Point p) {
+	public int compare(Point p, Segment s) {
 		return Utils.sign((s.pE.y - s.pS.y) * (p.x - s.pS.x) - (s.pE.x - s.pS.x) * (p.y - s.pS.y));
 	}
 	
@@ -72,141 +73,19 @@ public abstract class Abstract2DPlane {
 		return new Segment(adjust(segment.pS, yD, xD), adjust(segment.pE, yD, xD));
 	}
 	
-	public List<Collision> castRay(Segment ray, Collection<Segment> segments) {		
-		HashMap<Point, Collection<Segment>> touches = new HashMap<Point, Collection<Segment>>();
-		List<Collision> collisions = new ArrayList<Collision>();
-		
-		for (Segment segment : segments) {
-			double[] u = collidesAt(ray, segment);
-			
-			if (u == null || Utils.lt(u[0], 0) || Utils.lt(u[1], 0) || Utils.gt(u[1], 1)) {
-				// No collision.
-				continue;
-			}
-			
-			Point point = getPointAlongSegment(segment, u[1]);
-			
-			if (Utils.equals(u[1], 0) || Utils.equals(u[1], 1)) {
-				// Just touching.
-				Collection<Segment> touchSegments = touches.get(point);
-				if (touchSegments == null) {
-					touchSegments = new ArrayList<Segment>();
-					touches.put(point, touchSegments);
-				}
-				touchSegments.add(segment);
-			} else {
-				// Colliding.
-				collisions.add(new Collision(point, segment));
-			}
-		}
-		
-		for (Map.Entry<Point, Collection<Segment>> entry : touches.entrySet()) {
-			if (entry.getValue().size() == 1) {
-				continue;
-			}
-			
-			Collection<Segment> clockwise = new LinkedList<Segment>();
-			boolean anticlockwise = false;
-			for (Segment touchedSegment : entry.getValue()) {
-				int dir = compare(ray, touchedSegment.pS) + compare(ray, touchedSegment.pE);
-				if (dir > 0) {
-					clockwise.add(touchedSegment);
-				}
-				if (dir < 0) {
-					anticlockwise = true;
-				}
-			}
-			
-			if (!clockwise.isEmpty() && anticlockwise) {
-				Iterator<Segment> iterator = clockwise.iterator();
-				Segment closestClockwise = iterator.next();
-				while (iterator.hasNext()) {
-					Segment test = iterator.next();
-					Point other = other(test, entry.getKey());
-					if (compare(closestClockwise, other) > 0) {
-						closestClockwise = test;
-					}
-				}
-				
-				collisions.add(new Collision(entry.getKey(), closestClockwise));
-			}
-		}
-		
-		collisions.sort((collision1, collision2) -> {
-			return Utils.compare(distance(ray.pS, collision1.point), distance(ray.pS, collision2.point));
-		});
-		
-		return collisions;
-	}
-	
-	private Collision getNextCollision(Segment ray, Collection<Segment> segments) {		
-		HashMap<Point, Segment> collisions = new HashMap<Point, Segment>();
-		
-		for (Segment segment : segments) {
-			double[] u = collidesAt(ray, segment);
-			
-			// Don't collide with end of segments.
-			if (u == null || Utils.lt(u[0], 0) || Utils.lt(u[1], 0) || Utils.gte(u[1], 1)) {
-				// No collision.
-				continue;
-			}
-			
-			Point point = getPointAlongSegment(segment, u[1]);
-			collisions.put(point, segment);
-		}
-		
-		if (collisions.isEmpty()) {
-			return null;
-		}
-		
-		Iterator<Point> iterator = collisions.keySet().iterator();
-		Point closestCollision = iterator.next();
-		double closestCollisionDistance = distance(ray.pS, closestCollision);
-		while (iterator.hasNext()) {
-			Point collision = iterator.next();
-			double collisionDistance = distance(ray.pS, collision);
-			if (Utils.lt(collisionDistance, closestCollisionDistance)) {
-				closestCollision = collision;
-				closestCollisionDistance = collisionDistance;
-			}
-		}
-		
-		return new Collision(closestCollision, collisions.get(closestCollision));
-		
-	}
-	
 	/**
-	 * 
+	 * Returns the closest collisions along the given ray.
+	 * Returns an array of two collision elements,
+	 * collision[0] is on a segment that extends left of the collision point,
+	 * collision[1] is on a segment that extends right of the collision point.
 	 * Assumes that the Collection of segments has been normalised.
 	 * @param ray
 	 * @param normSegs
 	 * @return 
 	 */
-	private Collision[] getFirstCollisions(Segment ray, Collection<Segment> normSegs) {
-		TreeSet<Collision> antiClockwise = new TreeSet<Collision>((c1, c2) -> {
-			// Compare the distance between the collision points.
-			int result = Utils.sign(distance(ray.pS, c1.point) - distance(ray.pS, c2.point));
-			
-			// If collision points are equidistant (should be the same point),
-			// the most anti-clockwise element should be first,
-			// in effect, sorted clockwise.
-			if (result == 0) {
-				result = compare(c2.segment, c1.segment.pS);
-			}
-			return result;
-		});
-		TreeSet<Collision> clockwise = new TreeSet<Collision>((c1, c2) -> {
-			// Compare the distance between the collision points.
-			int result = Utils.sign(distance(ray.pS, c1.point) - distance(ray.pS, c2.point));
-			
-			// If collision points are equidistant (should be the same point),
-			// the most anti-clockwise element should be first,
-			// in effect, sorted anti-clockwise.
-			if (result == 0) {
-				result = -compare(c2.segment, c1.segment.pE);
-			}
-			return result;
-		});
+	private Collision[] getNextCollisions(Segment ray, Collection<Segment> normSegs) {
+		List<Collision> antiClockwise = new ArrayList<Collision>();
+		List<Collision> clockwise = new ArrayList<Collision>();
 		
 		for (Segment segment : normSegs) {
 			double[] u = collidesAt(ray, segment);
@@ -225,7 +104,74 @@ public abstract class Abstract2DPlane {
 			}
 		}
 		
-		return new Collision[]{antiClockwise.first(), clockwise.first()};
+		Collections.sort(antiClockwise, (c1, c2) -> {
+			// Compare the distance between the collision points.
+			int result = Utils.sign(distance(ray.pS, c1.point) - distance(ray.pS, c2.point));
+			
+			// If collision points are equidistant (should be the same point),
+			// the most anti-clockwise element should be first,
+			// in effect, sorted clockwise.
+			if (result == 0) {
+				result = compare(c1.segment.pS, c2.segment);
+			}
+			return result;
+		});
+		Collections.sort(clockwise, (c1, c2) -> {
+			// Compare the distance between the collision points.
+			int result = Utils.sign(distance(ray.pS, c1.point) - distance(ray.pS, c2.point));
+			
+			// If collision points are equidistant (should be the same point),
+			// the most clockwise element should be first,
+			// in effect, sorted anti-clockwise.
+			if (result == 0) {
+				result = -compare(c1.segment.pE, c2.segment);
+			}
+			return result;
+		});
+		
+		return new Collision[]{antiClockwise.get(0), clockwise.get(0)};
+	}
+	
+	/**
+	 * Returns the closest collision along the given ray.
+	 * A slightly faster implementation of getNextCollisions,
+	 * which only returns the next clockwise collision.
+	 * Intended to be used when processing points in a clockwise manner.
+	 * Assumes that the Collection of segments has been normalised.
+	 * @param ray
+	 * @param normSegs
+	 * @return 
+	 */
+	private Collision getNextCollision(Segment ray, Collection<Segment> normSegs) {		
+		List<Collision> collisions = new LinkedList<Collision>();
+		
+		for (Segment segment : normSegs) {
+			double[] u = collidesAt(ray, segment);
+			
+			// Don't collide with end of segments.
+			if (u == null || Utils.lt(u[0], 0) || Utils.lt(u[1], 0) || Utils.gte(u[1], 1)) {
+				// No collision.
+				continue;
+			}
+			
+			Point point = getPointAlongSegment(segment, u[1]);
+			collisions.add(new Collision(point, segment));
+		}
+		
+		// Get the closest collision.
+		// If two segments start at collision point, select the last segment,
+		// based on normalisation, this is the most clockwise segment.
+		Collision closestCollision = null;
+		double closestCollisionDistance = Double.POSITIVE_INFINITY;
+		for (Collision collision : collisions) {
+			double collDistance = distance(ray.pS, collision.point);
+			if (Utils.lt(collDistance, closestCollisionDistance)) {
+				closestCollision = collision;
+				closestCollisionDistance = collDistance;
+			}
+		}
+		
+		return closestCollision;
 	}
 	
 	/**
@@ -250,17 +196,17 @@ public abstract class Abstract2DPlane {
 			
 			// If both segments start at the same point, sort clockwise.
 			if (result == 0) {
-				result = compare(segment2, segment1.pE);
+				result = compare(segment1.pE, segment2);
 			}
 			return result;
 		});
 		
 		for (Segment segment : segments) {
-			// If the relativeTo is colinear to this segment, ignore this segment.
+			// If relativeTo is colinear to this segment, ignore this segment.
 			// As lines are technically 1 dimensional,
 			// nothing cast from relativeTo can interact with it anyway.
 			// Also prevents problems when relativeTo intersects the segment.
-			if (compare(segment, relativeTo) == 0) {
+			if (compare(relativeTo, segment) == 0) {
 				continue;
 			}
 			
@@ -268,7 +214,7 @@ public abstract class Abstract2DPlane {
 			// the end point should always be clockwise from the start point,
 			// if all points are colinear (only included here for safety),
 			// the start point should be closer than the end point.
-			int result = compare(new Segment(relativeTo, segment.pS), segment.pE);
+			int result = compare(segment.pE, new Segment(relativeTo, segment.pS));
 			if ((result < 0) || (result == 0 && distance(relativeTo, segment.pS) > distance(relativeTo, segment.pE))) {
 				segment = new Segment(segment.pE, segment.pS);
 			}
@@ -283,15 +229,7 @@ public abstract class Abstract2DPlane {
 		return (point.equals(segment.pS)) ? segment.pE : segment.pS;
 	}
 	
-	public Collection<Triangle> getFOV(Point centre, Collection<Segment> segments) {
-		return getFOVLotsOfIfs(centre, segments).keySet();
-	}
-	
-	public Collection<Triangle> getFOV(Point centre, Collection<Segment> segments, double limit) {
-		return getFOVWithBlockingSegments(centre, segments, limit).keySet();
-	}
-	
-	public Map<Triangle, Segment> getFOVWithBlockingSegments(Point centre, Collection<Segment> segments, double limit) {
+	public Map<Triangle, Segment> getFOV(Point centre, Collection<Segment> segments, double limit) {
 		Collection<Segment> modSegments = new ArrayList<Segment>(segments.size() + 4);
 		
 		modSegments.addAll(segments);
@@ -300,26 +238,30 @@ public abstract class Abstract2DPlane {
 		modSegments.add(new Segment(new Point(centre.y + limit, centre.x + limit), new Point(centre.y - limit, centre.x + limit)));
 		modSegments.add(new Segment(new Point(centre.y - limit, centre.x + limit), new Point(centre.y - limit, centre.x - limit)));
 		
-		return getFOVLotsOfIfs(centre, modSegments);
+		return getFOV(centre, modSegments);
 	}
 	
-	private Map<Triangle, Segment> getFOVLotsOfIfs(Point centre, Collection<Segment> segments) {
+	private Map<Triangle, Segment> getFOV(Point centre, Collection<Segment> segments) {
 		Map<Triangle, Segment> triangles = new LinkedHashMap<Triangle, Segment>();
 		if (segments.isEmpty()) {
 			return triangles;
 		}
 		
+		// Normalise segments.
+		// getFirstCollisions and getNextCollision require normalised segments.
 		Collection<Segment> normSegs = normaliseSegments(segments, centre);
 		
 		ArrayList<Point> points = new ArrayList<Point>();
-		Map<Point, Segment> startPointToSegment = new HashMap<Point, Segment>();
+		Map<Point, Segment> startPoints = new HashMap<Point, Segment>();
 		for (Segment segment : normSegs) {
 			points.add(segment.pS);
 			points.add(segment.pE);
-			startPointToSegment.put(segment.pS, segment);
+			startPoints.put(segment.pS, segment);
 		}
+		
+		// Sort points, so that they are parsed by the next step in order.
 		points.sort((point1, point2) -> {
-//			int result = Abstract2DPlane.compare(new LineSegment(centre, point2), point1);
+			// Sort clockwise, from y-axis.
 			int result = Utils.sign(angle(point1.y - centre.y, point1.x - centre.x) - angle(point2.y - centre.y, point2.x - centre.x));
 			
 			// If points are colinear.
@@ -349,20 +291,27 @@ public abstract class Abstract2DPlane {
 		*/
 		Iterator<Point> iterator = points.iterator();
 		Point next = iterator.next();
-		Collision[] firstCollisions = getFirstCollisions(new Segment(centre, next), normSegs);
+		Collision[] firstCollisions = getNextCollisions(new Segment(centre, next), normSegs);
+		// Point of first collision, on last clockwise segment.
 		Point initPoint = firstCollisions[0].point;
+		// Point on current segment, where current triangle of view begins.
 		Point lastPoint = firstCollisions[1].point;
 		Segment currentSegment = firstCollisions[1].segment;
 		while (iterator.hasNext()) {
 			next = iterator.next();
 			if (next.equals(currentSegment.pE)) {
+				// End of current segment.
+				// Add triangle from last to the end of current segment.
 				triangles.put(new Triangle(centre, lastPoint, next), currentSegment);
 				
 				Collision collision = getNextCollision(new Segment(centre, next), normSegs);
 				lastPoint = collision.point;
 				currentSegment = collision.segment;
-			} else if (startPointToSegment.containsKey(next)) {
+			} else if (startPoints.containsKey(next)) {
 				// TODO: If statement above, otherwise endpoints are tested and sometimes closer than the current segment.
+				
+				// Cast a ray from centre to the next start point,
+				// and find the point on the current segment.
 				double[] u = collidesAt(new Segment(centre, next), currentSegment);
 				Point pointOnCurrentSegment = getPointAlongSegment(currentSegment, u[1]);
 				
@@ -370,11 +319,11 @@ public abstract class Abstract2DPlane {
 				// Or if the point is touching the current segment,
 				// and the new segment is in front of the current segment.
 				double distanceD = distance(centre, next) - distance(centre, pointOnCurrentSegment);
-				if (Utils.lt(distanceD, 0) || (Utils.equals(distanceD, 0) && Utils.gt(compare(currentSegment, startPointToSegment.get(next).pE), 0))) {
+				if (Utils.lt(distanceD, 0) || (Utils.equals(distanceD, 0) && Utils.gt(compare(startPoints.get(next).pE, currentSegment), 0))) {
 					triangles.put(new Triangle(centre, lastPoint, pointOnCurrentSegment), currentSegment);
 					
 					lastPoint = next;
-					currentSegment = startPointToSegment.get(next);
+					currentSegment = startPoints.get(next);
 				}
 			}
 		}
@@ -395,10 +344,6 @@ public abstract class Abstract2DPlane {
 		return new Point(yD * ratio, xD * ratio);
 	}
 	
-	public double angle(Point from, Point to) {
-		return angle(to.y - from.y, to.x - from.x);
-	}
-	
 	public double angle(double yD, double xD) {
 		double result = Math.atan2(xD, yD);
 		if (result < 0) {
@@ -407,10 +352,14 @@ public abstract class Abstract2DPlane {
 		return result;
 	}
 	
+	public double angle(Point from, Point to) {
+		return angle(to.y - from.y, to.x - from.x);
+	}
+	
 	public int contains(Polygon polygon, Point point) {
 		Collection<Segment> segments = new ArrayList<Segment>(polygon.segments.size());
 		for (Segment segment : polygon.segments) {
-			int result = compare(new Segment(point, segment.pS), segment.pE);
+			int result = compare(segment.pE, new Segment(point, segment.pS));
 			if (result == 0) {
 				// Colinear.
 				if (Utils.equals(distance(segment.pS, point) + distance(point, segment.pE), distance(segment.pS, segment.pE))) {

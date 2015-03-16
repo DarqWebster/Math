@@ -45,6 +45,6 @@ public class Segment {
 
 	@Override
 	public String toString() {
-		return "LineSegment{" + "pS=" + pS + ", pE=" + pE + '}';
+		return "Segment{pS=" + pS + ", pE=" + pE + '}';
 	}
 }
