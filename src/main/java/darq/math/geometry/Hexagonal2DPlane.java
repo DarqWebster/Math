@@ -164,20 +164,20 @@ public class Hexagonal2DPlane extends Abstract2DPlane {
 			prelims[count++] = new Coord(yR, (-zR + yR));
 		}
 		
-		// Sort network,
+		// Sort network.
 		// No need for a full sort algorithm.
 		RoundComparator comparator = new RoundComparator();
-		if (comparator.compare(prelims[1], prelims[2]) < 0) {
+		if (comparator.compare(prelims[1], prelims[2]) > 0) {
 			Coord temp = prelims[1];
 			prelims[1] = prelims[2];
 			prelims[2] = temp;
 		}
-		if (comparator.compare(prelims[0], prelims[2]) < 0) {
+		if (comparator.compare(prelims[0], prelims[2]) > 0) {
 			Coord temp = prelims[0];
 			prelims[0] = prelims[2];
 			prelims[2] = temp;
 		}
-		if (comparator.compare(prelims[0], prelims[1]) < 0) {
+		if (comparator.compare(prelims[0], prelims[1]) > 0) {
 			Coord temp = prelims[0];
 			prelims[0] = prelims[1];
 			prelims[1] = temp;
@@ -219,8 +219,8 @@ public class Hexagonal2DPlane extends Abstract2DPlane {
 	
 	private static class RoundComparator implements Comparator<Coord> {
 		/**
-		 * Compares two Coords, based on nullity, then staticDistance, then hexants.
-		 * Returns (-)3 if one Coord is null.
+		 * Compares two Coords, based on nullity, then distance, then hexants.
+		 * Returns (-)3 if one Coord is null, nulls sort to the end.
 		 * Returns (-)2 if one Coord is further away than the other.
 		 * Returns (-)1 if one Coord is circularly before the other.
 		 * Returns 0 if both parameters are equal.
@@ -229,21 +229,22 @@ public class Hexagonal2DPlane extends Abstract2DPlane {
 		 * @param o2
 		 * @return 
 		 */
+		@Override
 		public int compare(Coord o1, Coord o2) {
 			if (o1 == null && o2 == null) { return  0; }
-			if (o1 == null && o2 != null) { return -3; }
-			if (o1 != null && o2 == null) { return  3; }
+			if (o1 == null && o2 != null) { return  3; }
+			if (o1 != null && o2 == null) { return -3; }
 			
 			double delta;
 			
-			delta = staticDistance(o2.y, o2.x) - staticDistance(o1.y, o1.x);
+			delta = staticDistance(o1.y, o1.x) - staticDistance(o2.y, o2.x);
 			if (!Utils.equals(delta, 0)) {
 				return Utils.sign(delta) * 2;
 			}
 			
-			delta = hexant(o2.y, o2.x) - hexant(o1.y, o1.x);
+			delta = hexant(o1.y, o1.x) - hexant(o2.y, o2.x);
 
-			// Use "shortest" circular staticDistance between Coords.
+			// Use "shortest" circular distance between Coords.
 			// Example, hexant 5 is circularly before hexant 0.
 			// Does not preserve actual delta between Coords.
 			if (Math.abs(delta) > 3) {
