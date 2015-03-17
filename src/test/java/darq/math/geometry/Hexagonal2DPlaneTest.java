@@ -355,28 +355,6 @@ public class Hexagonal2DPlaneTest extends TestCase {
 	}
 	
 	@Test
-	public void testSpecRound() {
-		System.out.println("specRound");
-		
-		Coord exp;
-		Coord res;
-		
-		Coord[] coords;
-		boolean conservative;
-		int direction;
-		
-		// Centers.
-		coords = new Coord[] {
-			new Coord(0, 0),
-			new Coord(1, 0),
-			new Coord(1, 1)
-		};
-		conservative = true;
-		direction = Hexagonal2DPlane.DIRECTION_CLOCKWISE;
-		exp = coords[0];
-	}
-	
-	@Test
 	public void testGetPointByHexant() {
 		System.out.println("getPointByHexant");
 		

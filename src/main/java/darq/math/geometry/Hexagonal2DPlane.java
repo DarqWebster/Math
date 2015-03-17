@@ -67,7 +67,8 @@ import java.util.List;
  * @author Craig.Webster
  */
 public class Hexagonal2DPlane extends Abstract2DPlane {
-	
+	public static final int ROUND_UP = 1;
+	public static final int ROUND_DOWN = -1;
 	public static final int DIRECTION_CLOCKWISE = 1;
 	public static final int DIRECTION_ANTICLOCKWISE = -1;
 	
@@ -115,9 +116,9 @@ public class Hexagonal2DPlane extends Abstract2DPlane {
 		}
 	}
 	
-	public static Coord round(double yD, double xD, boolean conservative, int direction) {
+	public static Coord round(double yD, double xD, int round, int direction) {
 		Coord[] coords = round(yD, xD);
-		return specRound(coords, conservative, direction);
+		return specRound(coords, round, direction);
 	}
 	
 	public static Coord[] round(double yD, double xD) {
@@ -192,7 +193,7 @@ public class Hexagonal2DPlane extends Abstract2DPlane {
 		return results;
 	}
 	
-	private static Coord specRound(Coord[] coords, boolean conservative, int direction) {
+	private static Coord specRound(Coord[] coords, int round, int direction) {
 		Coord value = coords[0];
 		for (int i = 1; i < coords.length; i++) {
 			Coord coord = coords[i];
@@ -202,7 +203,7 @@ public class Hexagonal2DPlane extends Abstract2DPlane {
 			
 			double distanceD = staticDistance(value.y, value.x) - staticDistance(coord.y, coord.x);
 			if (!Utils.equals(distanceD, 0)) {
-				distanceD = distanceD * (conservative ? -1 : 1);
+				distanceD = distanceD * round;
 				if (distanceD < 0) {
 					value = coord;
 				}
@@ -383,8 +384,8 @@ public class Hexagonal2DPlane extends Abstract2DPlane {
 		Point extPoint2 = getDeltaInArc(point2.y, point2.x, direction);
 		
 		// Round the Points to Coords.
-		Coord coord1 = specRound(round(extPoint1.y, extPoint1.x), false, -direction);
-		Coord coord2 = specRound(round(extPoint2.y, extPoint2.x), false, direction);
+		Coord coord1 = specRound(round(extPoint1.y, extPoint1.x), ROUND_UP, -direction);
+		Coord coord2 = specRound(round(extPoint2.y, extPoint2.x), ROUND_UP, direction);
 				
 		// Obtain the arc between the two coords.
 		List<Coord> arc = getArc(yS, xS, coord1.y + yS, coord1.x + xS, coord2.y + yS, coord2.x + xS, direction);
@@ -502,8 +503,8 @@ public class Hexagonal2DPlane extends Abstract2DPlane {
 		}
 		
 		// Round the Points to Coords.
-		Coord coord1 = specRound(round(point1.y, point1.x), false, -direction);
-		Coord coord2 = specRound(round(point2.y, point2.x), false, direction);
+		Coord coord1 = specRound(round(point1.y, point1.x), ROUND_UP, -direction);
+		Coord coord2 = specRound(round(point2.y, point2.x), ROUND_UP, direction);
 		
 //		System.out.print("Distance: " + staticDistance + ". Points: " + point1 + " and " + point2 + ". Coords: " + coord1 + " and " + coord2 + ".");
 		List<Coord> arc = getArc(yS, xS, coord1.y + yS, coord1.x + xS, coord2.y + yS, coord2.x + xS, direction);
