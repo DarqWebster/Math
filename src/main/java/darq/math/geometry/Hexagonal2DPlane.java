@@ -89,23 +89,6 @@ public class Hexagonal2DPlane extends Abstract2DPlane {
 		new Coord(+1,  0),
 		new Coord(+1, +1)
 	};
-	
-	private static final Point[] cornerPoints = new Point[] {
-		staticGetDeltaInDirection( 2,  1, 2D / 3D),	// Middle of hexant 0.
-		staticGetDeltaInDirection( 1,  2, 2D / 3D),	// Middle of hexant 1.
-		staticGetDeltaInDirection(-1,  1, 2D / 3D),	// Middle of hexant 2.
-		staticGetDeltaInDirection(-2, -1, 2D / 3D),	// Middle of hexant 3.
-		staticGetDeltaInDirection(-1, -2, 2D / 3D),	// Middle of hexant 4.
-		staticGetDeltaInDirection( 1, -1, 2D / 3D)	// Middle of hexant 5.	
-	};
-	
-	public static double staticDistance(double yD, double xD) {
-		if (Utils.sign(yD) * Utils.sign(xD) < 0) {
-			return Math.abs(yD) + Math.abs(xD);
-		} else {
-			return Math.max(Math.abs(yD), Math.abs(xD));
-		}
-	}
 
 	@Override
 	public double distance(double yD, double xD) {
@@ -116,12 +99,12 @@ public class Hexagonal2DPlane extends Abstract2DPlane {
 		}
 	}
 	
-	public static Coord round(double yD, double xD, int round, int direction) {
+	public Coord round(double yD, double xD, int round, int direction) {
 		Coord[] coords = round(yD, xD);
 		return specRound(coords, round, direction);
 	}
 	
-	public static Coord[] round(double yD, double xD) {
+	public Coord[] round(double yD, double xD) {
 		// Obtain the third axis.
 		double zD = yD - xD;
 		
@@ -136,7 +119,7 @@ public class Hexagonal2DPlane extends Abstract2DPlane {
 		double xE = Math.abs(xD - xR);
 				
 		// Degenerate case where point is on an edge and 0.5 away from centre.
-		if (Utils.equals(staticDistance(yD, xD) % 1, 0.5) && (Utils.equals(zE, 0) || Utils.equals(yE, 0) || Utils.equals(xE, 0))) {
+		if (Utils.equals(distance(yD, xD) % 1, 0.5) && (Utils.equals(zE, 0) || Utils.equals(yE, 0) || Utils.equals(xE, 0))) {
 			return new Coord[] {
 				new Coord(yR, xR),
 				new Coord((int) Utils.roundOptSymEps(yD), (int) Utils.roundOptSymEps(xD))
@@ -193,7 +176,7 @@ public class Hexagonal2DPlane extends Abstract2DPlane {
 		return results;
 	}
 	
-	private static Coord specRound(Coord[] coords, int round, int direction) {
+	private Coord specRound(Coord[] coords, int round, int direction) {
 		Coord value = coords[0];
 		for (int i = 1; i < coords.length; i++) {
 			Coord coord = coords[i];
@@ -201,7 +184,7 @@ public class Hexagonal2DPlane extends Abstract2DPlane {
 				continue;
 			}
 			
-			double distanceD = staticDistance(value.y, value.x) - staticDistance(coord.y, coord.x);
+			double distanceD = distance(value.y, value.x) - distance(coord.y, coord.x);
 			if (!Utils.equals(distanceD, 0)) {
 				distanceD = distanceD * round;
 				if (distanceD < 0) {
@@ -218,7 +201,7 @@ public class Hexagonal2DPlane extends Abstract2DPlane {
 		return value;
 	}
 	
-	private static class RoundComparator implements Comparator<Coord> {
+	private class RoundComparator implements Comparator<Coord> {
 		/**
 		 * Compares two Coords, based on nullity, then distance, then hexants.
 		 * Returns (-)3 if one Coord is null, nulls sort to the end.
@@ -238,7 +221,7 @@ public class Hexagonal2DPlane extends Abstract2DPlane {
 			
 			double delta;
 			
-			delta = staticDistance(o1.y, o1.x) - staticDistance(o2.y, o2.x);
+			delta = distance(o1.y, o1.x) - distance(o2.y, o2.x);
 			if (!Utils.equals(delta, 0)) {
 				return Utils.sign(delta) * 2;
 			}
@@ -259,7 +242,7 @@ public class Hexagonal2DPlane extends Abstract2DPlane {
 		}
 	}
 	
-	public static double hexant(double yD, double xD) {
+	public double hexant(double yD, double xD) {
 		if (yD > 0 && xD >= 0 && yD > xD) {
 			return 0 + (xD / yD);
 		}
@@ -282,7 +265,7 @@ public class Hexagonal2DPlane extends Abstract2DPlane {
 		return -1;
 	}
 	
-	public static double hexantCompare(double y1, double x1, double y2, double x2, int direction, boolean circle) {
+	public double hexantCompare(double y1, double x1, double y2, double x2, int direction, boolean circle) {
 		double delta = (hexant(y2, x2) - hexant(y1, x1)) * direction;
 		if (circle && (delta > 3 || delta <= -3)) {
 			delta = delta - (6 * Utils.sign(delta));
@@ -290,20 +273,14 @@ public class Hexagonal2DPlane extends Abstract2DPlane {
 		return delta;
 	}
 	
-	public static Point staticGetDeltaInDirection(double yD, double xD, double step) {
-		double reference = staticDistance(yD, xD);
-		double ratio = step / reference;
-		return new Point(yD * ratio, xD * ratio);
-	}
-	
-	public static Point getDeltaInArc(double yD, double xD, double step) {
-		double distance = staticDistance(yD, xD);
+	public Point getDeltaInArc(double yD, double xD, double step) {
+		double distance = distance(yD, xD);
 		double hexantStep = step / distance;
 		double hexant = Utils.modulus(hexant(yD, xD) + hexantStep, 6);
 		return getPointByHexant(distance, hexant);
 	}
 	
-	public static Point getPointByHexant(double distance, double hexant) {
+	public Point getPointByHexant(double distance, double hexant) {
 		int hexantIndex = (int) hexant;
 		Coord start = hexantStart[hexantIndex];
 		Coord forward = hexantForward[hexantIndex];
@@ -315,21 +292,21 @@ public class Hexagonal2DPlane extends Abstract2DPlane {
 		return new Point(y, x);
 	}
 	
-	public static Point[] getLine(double y1, double x1, double y2, double x2, double step) {
-		int size = (int) Math.ceil(staticDistance(y2 - y1, x2 - x1) / step);
+	public Point[] getLine(double y1, double x1, double y2, double x2, double step) {
+		int size = (int) Math.ceil(distance(y2 - y1, x2 - x1) / step);
 		return getLine(y1, x1, y2, x2, step, size);
 	}
 	
-	public static Point[] getLine(double y1, double x1, double y2, double x2, double step, int size) {		
+	public Point[] getLine(double y1, double x1, double y2, double x2, double step, int size) {		
 		double yD = y2 - y1;
 		double xD = x2 - x1;
 		
-		Point steps = staticGetDeltaInDirection(yD, xD, step);
+		Point steps = getDeltaInDirection(yD, xD, step);
 		
 		return getLine(y1, x1, steps.y, steps.x, size);
 	}
 	
-	public static Point[] getLine(double y1, double x1, double yS, double xS, int size) {
+	public Point[] getLine(double y1, double x1, double yS, double xS, int size) {
 		// Initialise the line.
 		Point[] line = new Point[size];
 		
@@ -344,7 +321,7 @@ public class Hexagonal2DPlane extends Abstract2DPlane {
 		return line;
 	}
 	
-	public static List<Coord> getBurst(int yS, int xS, int radius, CoordCheckFunctor pass) {
+	public List<Coord> getBurst(int yS, int xS, int radius, CoordCheckFunctor pass) {
 		List<Coord> burst = new LinkedList<Coord>();
 		
 		getCone(yS, xS, yS + radius, xS, yS - radius, xS, DIRECTION_CLOCKWISE, 1, radius, pass, burst);
@@ -353,7 +330,7 @@ public class Hexagonal2DPlane extends Abstract2DPlane {
 		return burst;
 	}
 	
-	public static List<Coord> getCone(int yS, int xS, double y1, double x1, double y2, double x2, int direction, int distance, int endDistance, CoordCheckFunctor pass) {
+	public List<Coord> getCone(int yS, int xS, double y1, double x1, double y2, double x2, int direction, int distance, int endDistance, CoordCheckFunctor pass) {
 		List<Coord> cone = new LinkedList<Coord>();
 		
 		getCone(yS, xS, y1, x1, y2, x2, direction, distance, endDistance, pass, cone);
@@ -361,16 +338,16 @@ public class Hexagonal2DPlane extends Abstract2DPlane {
 		return cone;
 	}
 	
-	private static void getCone(int yS, int xS, double y1, double x1, double y2, double x2, int direction, int distance, int endDistance, CoordCheckFunctor pass, List<Coord> cone) {
+	private void getCone(int yS, int xS, double y1, double x1, double y2, double x2, int direction, int distance, int endDistance, CoordCheckFunctor pass, List<Coord> cone) {
 		Point[] line1 = getLine(yS, xS, y1, x1, 1, endDistance + 1);
 		Point[] line2 = getLine(yS, xS, y2, x2, 1, endDistance + 1);
 		getConeSymmetric(yS, xS, line1, line2, direction, distance, pass, cone);
-//		getConeAsymmetric(yS, xS, line1, line2, direction, staticDistance, pass, cone);
+//		getConeAsymmetric(yS, xS, line1, line2, direction, distance, pass, cone);
 	}
 	
 	// TODO: Seems to be buggy, possibly due to rounding errors.
-	// Proof: Wall directly south from source, at staticDistance 5, but cannot reproduce reliably.
-	private static void getConeSymmetric(int yS, int xS, Point[] line1, Point[] line2, int direction, int distance, CoordCheckFunctor pass, List<Coord> cone) {		
+	// Proof: Wall directly south from source, at distance 5, but cannot reproduce reliably.
+	private void getConeSymmetric(int yS, int xS, Point[] line1, Point[] line2, int direction, int distance, CoordCheckFunctor pass, List<Coord> cone) {		
 		// Points delimiting the arc.
 		Point point1 = line1[distance];
 		Point point2 = line2[distance];
@@ -434,14 +411,14 @@ public class Hexagonal2DPlane extends Abstract2DPlane {
 			arc.remove(arc.size() - 1);
 		}
 		
-		// Add all tiles at this staticDistance to the cone.
+		// Add all tiles at this distance to the cone.
 		cone.addAll(arc);
 
 		// If not at edge of radius, algorithm may need recursing.
 		if (distance < line1.length -1) {
 			if (arc.isEmpty()) {
 				// Recurse, as the return skips the last recursion.
-//				getConeSymmetric(yS, xS, line1, line2, direction, staticDistance + 1, pass, cone);
+//				getConeSymmetric(yS, xS, line1, line2, direction, distance + 1, pass, cone);
 				return;
 			}
 			
@@ -463,7 +440,7 @@ public class Hexagonal2DPlane extends Abstract2DPlane {
 					Point[] line3 = getLine(yS, xS, coord.y + lastClearPoint.y, coord.x + lastClearPoint.x, 1, line2.length);
 					
 					// Recurse.
-//					System.out.println("\t\tRecursing to staticDistance " + (staticDistance + 1));
+//					System.out.println("\t\tRecursing to distance " + (distance + 1));
 					getConeSymmetric(yS, xS, line1, line3, direction, distance + 1, pass, cone);
 				}
 
@@ -488,8 +465,8 @@ public class Hexagonal2DPlane extends Abstract2DPlane {
 	}
 	
 	// TODO: Seems to be buggy, possibly due to rounding errors.
-	// Proof: Wall directly south from source, at staticDistance 5, but cannot reproduce reliably.
-	private static void getConeAsymmetric(int yS, int xS, Point[] line1, Point[] line2, int direction, int distance, CoordCheckFunctor pass, List<Coord> cone) {		
+	// Proof: Wall directly south from source, at distance 5, but cannot reproduce reliably.
+	private void getConeAsymmetric(int yS, int xS, Point[] line1, Point[] line2, int direction, int distance, CoordCheckFunctor pass, List<Coord> cone) {		
 		// Points delimiting the arc.
 		Point point1 = line1[distance];
 		Point point2 = line2[distance];
@@ -506,10 +483,10 @@ public class Hexagonal2DPlane extends Abstract2DPlane {
 		Coord coord1 = specRound(round(point1.y, point1.x), ROUND_UP, -direction);
 		Coord coord2 = specRound(round(point2.y, point2.x), ROUND_UP, direction);
 		
-//		System.out.print("Distance: " + staticDistance + ". Points: " + point1 + " and " + point2 + ". Coords: " + coord1 + " and " + coord2 + ".");
+//		System.out.print("Distance: " + distance + ". Points: " + point1 + " and " + point2 + ". Coords: " + coord1 + " and " + coord2 + ".");
 		List<Coord> arc = getArc(yS, xS, coord1.y + yS, coord1.x + xS, coord2.y + yS, coord2.x + xS, direction);
 		
-		// Add all tiles at this staticDistance to the cone.
+		// Add all tiles at this distance to the cone.
 		cone.addAll(arc);
 
 		// If not at edge of radius, algorithm may need recursing.
@@ -532,7 +509,7 @@ public class Hexagonal2DPlane extends Abstract2DPlane {
 					Point[] line3 = getLine(yS, xS, coord.y + lastClearPoint.y, coord.x + lastClearPoint.x, 1, line2.length);
 					
 					// Recurse.
-//					System.out.println("\t\tRecursing to staticDistance " + (staticDistance + 1));
+//					System.out.println("\t\tRecursing to distance " + (distance + 1));
 					getConeAsymmetric(yS, xS, line1, line3, direction, distance + 1, pass, cone);
 				}
 
@@ -556,11 +533,11 @@ public class Hexagonal2DPlane extends Abstract2DPlane {
 		}
 	}
 	
-	public static List<Coord> getArc(int y0, int x0, int y1, int x1, int y2, int x2, int direction) {
+	public List<Coord> getArc(int y0, int x0, int y1, int x1, int y2, int x2, int direction) {
 		List<Coord> arc = new LinkedList<Coord>();
 		
-		int radius = (int) staticDistance(y1 - y0, x1 - x0);
-		if ((int) staticDistance(y2 - y0, x2 - x0) != radius) {
+		int radius = (int) distance(y1 - y0, x1 - x0);
+		if ((int) distance(y2 - y0, x2 - x0) != radius) {
 			throw new IllegalArgumentException("Starting from (" + y0 + ", " + x0 + "), coords (" + y1 + ", " + x1 + ") and (" + y2 + ", " + x2 + ") do not form an arc.");
 		}
 		
@@ -591,14 +568,23 @@ public class Hexagonal2DPlane extends Abstract2DPlane {
 		return arc;
 	}
 	
-	private static Point[] getCriticalPoints(double yD, double xD, int direction) {
+	private Point[] getCriticalPoints(double yD, double xD, int direction) {
+		Point[] cornerPoints = new Point[] {
+			getDeltaInDirection( 2,  1, 2D / 3D),	// Middle of hexant 0.
+			getDeltaInDirection( 1,  2, 2D / 3D),	// Middle of hexant 1.
+			getDeltaInDirection(-1,  1, 2D / 3D),	// Middle of hexant 2.
+			getDeltaInDirection(-2, -1, 2D / 3D),	// Middle of hexant 3.
+			getDeltaInDirection(-1, -2, 2D / 3D),	// Middle of hexant 4.
+			getDeltaInDirection( 1, -1, 2D / 3D)	// Middle of hexant 5.	
+		};
+		
 		double hexant = hexant(yD, xD);
 		int hexantIndex = (int) hexant;
 		double hexantDelta = hexant - hexantIndex;
 		
-		// The staticDistance from closest integer hexant at which a point (yD, xD)
+		// The distance from closest integer hexant at which a point (yD, xD)
 		// becomes able to see a point of the hexagon (0, 0).
-		double threshold = (1 - (1 / staticDistance(yD, xD))) / 2;
+		double threshold = (1 - (1 / distance(yD, xD))) / 2;
 		
 		int negOffset = 1;
 		int posOffset = 1;
@@ -622,7 +608,7 @@ public class Hexagonal2DPlane extends Abstract2DPlane {
 		return new Point[] {cornerPoints[p1], cornerPoints[p2]};
 	}
 	
-	public static Coord[] getNeighbours(Coord coord) {
+	public Coord[] getNeighbours(Coord coord) {
 		Coord[] neighbours = new Coord[6];
 		neighbours[0] = new Coord(coord.y + 1, coord.x);
 		neighbours[1] = new Coord(coord.y + 1, coord.x + 1);

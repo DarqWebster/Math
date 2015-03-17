@@ -71,6 +71,7 @@ public class Hexagonal2DPlaneTest extends TestCase {
 		tests.put(new Point( 2, -2), 5 + 1/2D);
 		tests.put(new Point( 3, -1), 5 + 3/4D);
 		
+		Hexagonal2DPlane instance = new Hexagonal2DPlane();
 		for (Map.Entry<Point, Double> test : tests.entrySet()) {
 			Point t = test.getKey();
 			
@@ -80,7 +81,7 @@ public class Hexagonal2DPlaneTest extends TestCase {
 //			}
 			
 			double exp = test.getValue();
-			double res = Hexagonal2DPlane.hexant(t.y, t.x);
+			double res = instance.hexant(t.y, t.x);
 
 			String error = "For test " + t + ", was expecting " + exp + ", but found " + res + ".";
 			assertTrue(error, Utils.equals(exp, res));
@@ -302,6 +303,7 @@ public class Hexagonal2DPlaneTest extends TestCase {
 			new Coord(0, 0)
 		});
 		
+		Hexagonal2DPlane instance = new Hexagonal2DPlane();
 		for (Map.Entry<Point, Coord[]> test : tests.entrySet()) {
 			Point t = test.getKey();
 			
@@ -311,7 +313,7 @@ public class Hexagonal2DPlaneTest extends TestCase {
 //			}
 			
 			Coord[] exp = test.getValue();
-			Coord[] res = Hexagonal2DPlane.round(t.y, t.x);
+			Coord[] res = instance.round(t.y, t.x);
 
 			String error = "For test " + t + ", was expecting " + Arrays.deepToString(exp) + ", but found " + Arrays.deepToString(res) + ".";
 			assertEquals(error, exp.length, res.length);
@@ -344,7 +346,7 @@ public class Hexagonal2DPlaneTest extends TestCase {
 			
 			Coord[] exp = test.getValue();
 			for (Point t : wiggle) {
-				Coord[] res = Hexagonal2DPlane.round(t.y, t.x);
+				Coord[] res = instance.round(t.y, t.x);
 				String error = "For test " + t + ", was expecting " + Arrays.deepToString(exp) + ", but found " + Arrays.deepToString(res) + ".";
 				assertEquals(error, exp.length, res.length);
 				for (int i = 0; i < exp.length; i++) {
@@ -394,6 +396,7 @@ public class Hexagonal2DPlaneTest extends TestCase {
 		tests.put(new double[] {4D, 5 + 1/2D}, new Point( 2, -2));
 		tests.put(new double[] {4D, 5 + 3/4D}, new Point( 3, -1));
 		
+		Hexagonal2DPlane instance = new Hexagonal2DPlane();
 		for (Map.Entry<double[], Point> test : tests.entrySet()) {
 			double[] t = test.getKey();
 			
@@ -403,7 +406,7 @@ public class Hexagonal2DPlaneTest extends TestCase {
 //			}
 			
 			Point exp = test.getValue();
-			Point res = Hexagonal2DPlane.getPointByHexant(t[0], t[1]);
+			Point res = instance.getPointByHexant(t[0], t[1]);
 
 			String error = "For test (" + t[0] + ", " + t[1] + "), was expecting " + exp + ", but found " + res + ".";
 			assertTrue(error, Utils.equals(exp, res));
