@@ -292,11 +292,21 @@ public class Hexagonal2DPlane extends Abstract2DPlane {
 		return new Point(y, x);
 	}
 	
+	public Coord getHexantStart(int hexant) {
+		return hexantStart[hexant];
+	}
+	
+	public Coord getHexantForward(int hexant) {
+		return hexantStart[hexant];
+	}
+	
+	@Deprecated
 	public Point[] getLine(double y1, double x1, double y2, double x2, double step) {
 		int size = (int) Math.ceil(distance(y2 - y1, x2 - x1) / step);
 		return getLine(y1, x1, y2, x2, step, size);
 	}
 	
+	@Deprecated
 	public Point[] getLine(double y1, double x1, double y2, double x2, double step, int size) {		
 		double yD = y2 - y1;
 		double xD = x2 - x1;
@@ -306,6 +316,7 @@ public class Hexagonal2DPlane extends Abstract2DPlane {
 		return getLine(y1, x1, steps.y, steps.x, size);
 	}
 	
+	@Deprecated
 	public Point[] getLine(double y1, double x1, double yS, double xS, int size) {
 		// Initialise the line.
 		Point[] line = new Point[size];
@@ -321,6 +332,7 @@ public class Hexagonal2DPlane extends Abstract2DPlane {
 		return line;
 	}
 	
+	@Deprecated
 	public List<Coord> getBurst(int yS, int xS, int radius, CoordCheckFunctor pass) {
 		List<Coord> burst = new LinkedList<Coord>();
 		
@@ -330,6 +342,7 @@ public class Hexagonal2DPlane extends Abstract2DPlane {
 		return burst;
 	}
 	
+	@Deprecated
 	public List<Coord> getCone(int yS, int xS, double y1, double x1, double y2, double x2, int direction, int distance, int endDistance, CoordCheckFunctor pass) {
 		List<Coord> cone = new LinkedList<Coord>();
 		
@@ -338,6 +351,7 @@ public class Hexagonal2DPlane extends Abstract2DPlane {
 		return cone;
 	}
 	
+	@Deprecated
 	private void getCone(int yS, int xS, double y1, double x1, double y2, double x2, int direction, int distance, int endDistance, CoordCheckFunctor pass, List<Coord> cone) {
 		Point[] line1 = getLine(yS, xS, y1, x1, 1, endDistance + 1);
 		Point[] line2 = getLine(yS, xS, y2, x2, 1, endDistance + 1);
@@ -347,6 +361,7 @@ public class Hexagonal2DPlane extends Abstract2DPlane {
 	
 	// TODO: Seems to be buggy, possibly due to rounding errors.
 	// Proof: Wall directly south from source, at distance 5, but cannot reproduce reliably.
+	@Deprecated
 	private void getConeSymmetric(int yS, int xS, Point[] line1, Point[] line2, int direction, int distance, CoordCheckFunctor pass, List<Coord> cone) {		
 		// Points delimiting the arc.
 		Point point1 = line1[distance];
@@ -466,6 +481,7 @@ public class Hexagonal2DPlane extends Abstract2DPlane {
 	
 	// TODO: Seems to be buggy, possibly due to rounding errors.
 	// Proof: Wall directly south from source, at distance 5, but cannot reproduce reliably.
+	@Deprecated
 	private void getConeAsymmetric(int yS, int xS, Point[] line1, Point[] line2, int direction, int distance, CoordCheckFunctor pass, List<Coord> cone) {		
 		// Points delimiting the arc.
 		Point point1 = line1[distance];
@@ -533,6 +549,7 @@ public class Hexagonal2DPlane extends Abstract2DPlane {
 		}
 	}
 	
+	@Deprecated
 	public List<Coord> getArc(int y0, int x0, int y1, int x1, int y2, int x2, int direction) {
 		List<Coord> arc = new LinkedList<Coord>();
 		
@@ -568,6 +585,7 @@ public class Hexagonal2DPlane extends Abstract2DPlane {
 		return arc;
 	}
 	
+	@Deprecated
 	private Point[] getCriticalPoints(double yD, double xD, int direction) {
 		Point[] cornerPoints = new Point[] {
 			getDeltaInDirection( 2,  1, 2D / 3D),	// Middle of hexant 0.
@@ -608,6 +626,7 @@ public class Hexagonal2DPlane extends Abstract2DPlane {
 		return new Point[] {cornerPoints[p1], cornerPoints[p2]};
 	}
 	
+	@Deprecated
 	public Coord[] getNeighbours(Coord coord) {
 		Coord[] neighbours = new Coord[6];
 		neighbours[0] = new Coord(coord.y + 1, coord.x);
