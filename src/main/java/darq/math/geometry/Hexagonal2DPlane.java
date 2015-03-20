@@ -293,6 +293,6 @@ public class Hexagonal2DPlane extends Abstract2DPlane {
 	}
 	
 	public Coord getHexantForward(int hexant) {
-		return hexantStart[hexant];
+		return hexantForward[hexant];
 	}
 }
