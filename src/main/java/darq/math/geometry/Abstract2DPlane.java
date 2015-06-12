@@ -189,6 +189,30 @@ public abstract class Abstract2DPlane {
 		return collidesAt(s1, s2) == null && (Abstract2DPlane.this.contains(s1, s2.pS) || Abstract2DPlane.this.contains(s1, s2.pS) || Abstract2DPlane.this.contains(s2, s1.pS) || Abstract2DPlane.this.contains(s2, s1.pE));
 	}
 	
+	/**
+	 * Returns the left normal of the given segment.
+	 * The returned segment is perpendicular to the given segment,
+	 * shares a start point with the given segment,
+	 * and has an end point to the left of the given segment.
+	 * @param s
+	 * @return 
+	 */
+	public Segment normalL(Segment s) {
+		return new Segment(s.pS, new Point(s.pE.x - s.pS.x, s.pS.y - s.pE.y));
+	}
+	
+		/**
+	 * Returns the right normal of the given segment.
+	 * The returned segment is perpendicular to the given segment,
+	 * shares a start point with the given segment,
+	 * and has an end point to the right of the given segment.
+	 * @param s
+	 * @return 
+	 */
+	public Segment normalR(Segment s) {
+		return new Segment(s.pS, new Point(s.pS.x - s.pE.x, s.pE.y - s.pS.y));
+	}
+	
 	public Map<Triangle, Segment> getFOV(Point centre, Collection<Segment> segments) {
 		Map<Triangle, Segment> triangles = new LinkedHashMap<Triangle, Segment>();
 		if (segments.isEmpty()) {

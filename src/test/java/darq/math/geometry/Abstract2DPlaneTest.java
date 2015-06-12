@@ -14,22 +14,22 @@ import static org.junit.Assert.*;
  * @author Craig.Webster
  */
 public class Abstract2DPlaneTest {
-	
+
 	public Abstract2DPlaneTest() {
 	}
-	
+
 	@BeforeClass
 	public static void setUpClass() {
 	}
-	
+
 	@AfterClass
 	public static void tearDownClass() {
 	}
-	
+
 	@Before
 	public void setUp() {
 	}
-	
+
 	@After
 	public void tearDown() {
 	}
@@ -46,7 +46,7 @@ public class Abstract2DPlaneTest {
 		double[] exp;
 		double[] res;
 		String errorFormat = "For test (%s, %s), was expecting %s, but found %s.";
-		
+
 		s1 = new Segment(new Point(0, 0), new Point(5, 5));
 		s2 = new Segment(new Point(10, 10), new Point(15, 15));
 		exp = null;
@@ -66,24 +66,60 @@ public class Abstract2DPlaneTest {
 		int exp;
 		int res;
 		String errorFormat = "For test (%s, %s), was expecting %s, but found %s.";
-		
+
 		p = new Point(200, 100);
 		s = new Segment(new Point(100, 100), new Point(200, 200));
 		exp = -1;
 		res = instance.compare(p, s);
 		assertEquals(String.format(errorFormat, p, s, exp, res), exp, res);
-		
+
 		p = new Point(150, 150);
 		s = new Segment(new Point(100, 100), new Point(200, 200));
 		exp = 0;
 		res = instance.compare(p, s);
 		assertEquals(String.format(errorFormat, p, s, exp, res), exp, res);
-		
+
 		p = new Point(100, 200);
 		s = new Segment(new Point(100, 100), new Point(200, 200));
 		exp = 1;
 		res = instance.compare(p, s);
 		assertEquals(String.format(errorFormat, p, s, exp, res), exp, res);
+	}
+	
+	/**
+	 * Test of normalR method, of class Abstract2DPlane.
+	 */
+	@Test
+	public void testNormalL() {
+		System.out.println("normalL");
+		Abstract2DPlane instance = new Abstract2DPlaneImpl();
+		Segment s;
+		Segment exp;
+		Segment res;
+		String errorFormat = "For test %s, was expecting %s, but found %s.";
+
+		s = new Segment(new Point(0, 0), new Point(-1, 3));
+		exp = new Segment(new Point(0, 0), new Point(3, 1));
+		res = instance.normalL(s);
+		assertEquals(String.format(errorFormat, s, exp, res), exp, res);
+	}
+
+	/**
+	 * Test of normalR method, of class Abstract2DPlane.
+	 */
+	@Test
+	public void testNormalR() {
+		System.out.println("normalR");
+		Abstract2DPlane instance = new Abstract2DPlaneImpl();
+		Segment s;
+		Segment exp;
+		Segment res;
+		String errorFormat = "For test %s, was expecting %s, but found %s.";
+
+		s = new Segment(new Point(0, 0), new Point(-1, 3));
+		exp = new Segment(new Point(0, 0), new Point(-3, -1));
+		res = instance.normalR(s);
+		assertEquals(String.format(errorFormat, s, exp, res), exp, res);
 	}
 
 	public class Abstract2DPlaneImpl extends Abstract2DPlane {
