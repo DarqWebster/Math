@@ -32,10 +32,10 @@ public class Point {
 			return false;
 		}
 		final Point other = (Point) obj;
-		if (Double.doubleToLongBits(this.y) != Double.doubleToLongBits(other.y)) {
+		if (!Utils.equals(this.y, other.y)) {
 			return false;
 		}
-		if (Double.doubleToLongBits(this.x) != Double.doubleToLongBits(other.x)) {
+		if (!Utils.equals(this.x, other.x)) {
 			return false;
 		}
 		return true;
