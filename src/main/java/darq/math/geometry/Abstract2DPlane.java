@@ -198,7 +198,7 @@ public abstract class Abstract2DPlane {
 	 * @return 
 	 */
 	public Segment normalL(Segment s) {
-		return new Segment(s.pS, new Point(s.pE.x - s.pS.x, s.pS.y - s.pE.y));
+		return new Segment(s.pS, new Point(s.pS.y + (s.pE.x - s.pS.x), s.pS.x + (s.pS.y - s.pE.y)));
 	}
 	
 		/**
@@ -210,7 +210,7 @@ public abstract class Abstract2DPlane {
 	 * @return 
 	 */
 	public Segment normalR(Segment s) {
-		return new Segment(s.pS, new Point(s.pS.x - s.pE.x, s.pE.y - s.pS.y));
+		return new Segment(s.pS, new Point(s.pS.y + (s.pS.x - s.pE.x), s.pS.x +(s.pE.y - s.pS.y)));
 	}
 	
 	public Map<Triangle, Segment> getFOV(Point centre, Collection<Segment> segments) {
