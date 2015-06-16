@@ -125,7 +125,7 @@ public class Abstract2DPlaneTest {
 	public class Abstract2DPlaneImpl extends Abstract2DPlane {
 		@Override
 		public double distance(double yD, double xD) {
-			return 0.0;
+			throw new UnsupportedOperationException("Testing a method relying on distance in the Abstract class tests. Rather test in the concrete class."); //To change body of generated methods, choose Tools | Templates.
 		}
 	}
 }
