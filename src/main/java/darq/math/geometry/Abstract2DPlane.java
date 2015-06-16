@@ -479,6 +479,13 @@ public abstract class Abstract2DPlane {
 	 * @return 
 	 */
 	public Segment collides(Polygon p1, Polygon p2) {
+		if (!isConvex(p1)) {
+			throw new IllegalArgumentException("Polygon " + p1 + " is not convex.");
+		}
+		if (!isConvex(p2)) {
+			throw new IllegalArgumentException("Polygon " + p2 + " is not convex.");
+		}
+		
 		List<Segment> segments = new ArrayList<Segment>(p1.segments.size() + p2.segments.size());
 		segments.addAll(p1.segments);
 		segments.addAll(p2.segments);
@@ -541,5 +548,32 @@ public abstract class Abstract2DPlane {
 		}
 		
 		return new Segment(new Point(0, 0), getDeltaInDirection(distNorm.pE.y - distNorm.pS.y, distNorm.pE.x - distNorm.pS.x, dist * distMult));
+	}
+	
+	private boolean isConvex(Polygon polygon) {
+		boolean clockwise = true;
+		
+		List<Point> points = new ArrayList<Point>(polygon.points.size() + 2);
+		points.addAll(polygon.points);
+		points.add(polygon.points.get(0));
+		points.add(polygon.points.get(1));
+		Iterator<Point> iterator = points.iterator();
+		Point p1 = iterator.next();
+		Point p2 = iterator.next();
+		while (iterator.hasNext()) {
+			Point p3 = iterator.next();
+			
+			boolean res = Utils.gte(compare(p3, new Segment(p1, p2)), 0);
+			if (!clockwise && res) {
+				return false;
+			}
+			
+			clockwise = res;
+			
+			p1 = p2;
+			p2 = p3;
+		}
+		
+		return true;
 	}
 }
