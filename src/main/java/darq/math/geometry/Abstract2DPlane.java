@@ -467,4 +467,79 @@ public abstract class Abstract2DPlane {
 			this.segment = segment;
 		}
 	}
+	
+	/**
+	 * Determines if the given polygons are colliding.
+	 * Returns null if the given polygons are not colliding,
+	 * otherwise, returns the smallest possible vector,
+	 * that if applied to the second argument,
+	 * will cause the polygons to no longer collide.
+	 * @param p1
+	 * @param p2
+	 * @return 
+	 */
+	public Segment collides(Polygon p1, Polygon p2) {
+		List<Segment> segments = new ArrayList<Segment>(p1.segments.size() + p2.segments.size());
+		segments.addAll(p1.segments);
+		segments.addAll(p2.segments);
+		
+		double dist = Double.NEGATIVE_INFINITY;
+		Segment distNorm = null;
+		int distMult = 0;
+		for (Segment segm : segments) {
+			double yD = segm.pE.y - segm.pS.y;
+			double xD = segm.pE.x - segm.pS.x;
+			Segment norm = new Segment(segm.pS, new Point(segm.pS.y - xD, segm.pS.x + yD));
+			
+			double min1 = Double.POSITIVE_INFINITY;
+			double max1 = Double.NEGATIVE_INFINITY;
+			for (Point point : p1.points) {
+				Segment test = new Segment(point, new Point(point.y + yD, point.x + xD));
+				double u = collidesAt(test, norm)[1];
+				if (u < min1) {
+					min1 = u;
+				}
+				if (u > max1) {
+					max1 = u;
+				}
+			}
+			
+			double min2 = Double.POSITIVE_INFINITY;
+			double max2 = Double.NEGATIVE_INFINITY;
+			for (Point point : p2.points) {
+				Segment test = new Segment(point, new Point(point.y + yD, point.x + xD));
+				double u = collidesAt(test, norm)[1];
+				if (u < min2) {
+					min2 = u;
+				}
+				if (u > max2) {
+					max2 = u;
+				}
+			}
+						
+			double dist1 = min1 - max2;
+			double dist2 = min2 - max1;
+			
+			if (dist1 > 0 || dist2 > 0) {
+				return null;
+			}
+			
+			double normalLength = distance(norm.pS, norm.pE);
+			dist1 = dist1 * normalLength;
+			dist2 = dist2 * normalLength;
+			
+			if (dist1 <= 0 && dist1 > dist) {
+				dist = dist1;
+				distNorm = norm;
+				distMult = 1;
+			}
+			if (dist2 <= 0 && dist2 > dist) {
+				dist = dist2;
+				distNorm = norm;
+				distMult = -1;
+			}
+		}
+		
+		return new Segment(new Point(0, 0), getDeltaInDirection(distNorm.pE.y - distNorm.pS.y, distNorm.pE.x - distNorm.pS.x, dist * distMult));
+	}
 }
