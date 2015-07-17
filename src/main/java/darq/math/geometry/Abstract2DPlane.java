@@ -25,6 +25,9 @@ public abstract class Abstract2DPlane {
 	}
 	
 	public double angle(double yD, double xD) {
+		if (Utils.equals(yD, 0) && Utils.equals(xD, 0)) {
+			return Double.NaN;
+		}
 		double result = Math.atan2(xD, yD);
 		if (result < 0) {
 			result = 2 * Math.PI + result;
