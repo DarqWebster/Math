@@ -762,7 +762,7 @@ public abstract class Abstract2DPlane {
 			double dist1 = min1 - max2;
 			double dist2 = min2 - max1;
 			
-			if (dist1 > 0 || dist2 > 0) {
+			if (Utils.gt(dist1, 0) || Utils.gt(dist2, 0)) {
 				return null;
 			}
 			

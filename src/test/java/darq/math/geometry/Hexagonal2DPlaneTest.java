@@ -800,4 +800,52 @@ public class Hexagonal2DPlaneTest extends TestCase {
 		res = instance.contains(segment, point);
 		assertEquals(exp, res);
 	}
+	
+	@Test
+	public void testCollides() {
+		System.out.println("collides");
+		Hexagonal2DPlane instance = new Hexagonal2DPlane();
+		Polygon p1;
+		Polygon p2;
+		Segment exp;
+		Segment res;
+		String errorFormat = "For test (%s, %s), was expecting %s, but found %s.";
+	
+		// From the roguelike...
+		p1 = new Polygon(
+				new Point(0D, 0D),
+				new Point(-6D, -3D),
+				new Point(-6D, -6D)
+		);
+		p2 = new Polygon(
+				instance.getDeltaInDirection( 2,  1, 2D / 3D),	// Middle of hexant 0.
+				instance.getDeltaInDirection( 1,  2, 2D / 3D),	// Middle of hexant 1.
+				instance.getDeltaInDirection(-1,  1, 2D / 3D),	// Middle of hexant 2.
+				instance.getDeltaInDirection(-2, -1, 2D / 3D),	// Middle of hexant 3.
+				instance.getDeltaInDirection(-1, -2, 2D / 3D),	// Middle of hexant 4.
+				instance.getDeltaInDirection( 1, -1, 2D / 3D)	// Middle of hexant 5.	
+		);
+		p2 = instance.adjust(p2, -5, -2);
+		exp = new Segment(new Point(0, 0), new Point(0, 0));
+		res = instance.collides(p1, p2);
+		assertEquals(String.format(errorFormat, p1, p2, exp, res), exp, res);
+		
+		p1 = new Polygon(
+				new Point(0D, 0D),
+				new Point(-6D, -3D),
+				new Point(-6D, 0D)
+		);
+		p2 = new Polygon(
+				instance.getDeltaInDirection( 2,  1, 2D / 3D),	// Middle of hexant 0.
+				instance.getDeltaInDirection( 1,  2, 2D / 3D),	// Middle of hexant 1.
+				instance.getDeltaInDirection(-1,  1, 2D / 3D),	// Middle of hexant 2.
+				instance.getDeltaInDirection(-2, -1, 2D / 3D),	// Middle of hexant 3.
+				instance.getDeltaInDirection(-1, -2, 2D / 3D),	// Middle of hexant 4.
+				instance.getDeltaInDirection( 1, -1, 2D / 3D)	// Middle of hexant 5.	
+		);
+		p2 = instance.adjust(p2, -5, -3);
+		exp = new Segment(new Point(0, 0), new Point(0, 0));
+		res = instance.collides(p1, p2);
+		assertEquals(String.format(errorFormat, p1, p2, exp, res), exp, res);
+	}
 }
